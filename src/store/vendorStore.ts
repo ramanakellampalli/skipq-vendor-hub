@@ -31,7 +31,7 @@ export const useVendorStore = create<VendorState>(set => ({
   isSynced: false,
 
   setSync: ({ profile, activeOrders, pastOrders, menuItems }) =>
-    set({ profile, activeOrders, pastOrders, menuItems, isSynced: true }),
+    set({ profile: profile ?? null, activeOrders, pastOrders, menuItems, isSynced: true }),
 
   setProfile: profile => set({ profile }),
 
