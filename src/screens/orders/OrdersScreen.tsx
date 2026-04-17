@@ -6,22 +6,30 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
-  RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { ClipboardList } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
-import { Order } from '../../types';
+import { Order, OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import { useVendorStore } from '../../store/vendorStore';
 import { useVendorSocket } from '../../hooks/useVendorSocket';
+
+const CARD_ACTIONS: Partial<Record<OrderStatus, { next?: OrderStatus; reject?: boolean; label?: string }>> = {
+  PENDING:   { next: 'ACCEPTED', reject: true, label: 'Accept' },
+  ACCEPTED:  { next: 'PREPARING', label: 'Start Preparing' },
+  PREPARING: { next: 'READY', label: 'Mark Ready' },
+  READY:     { next: 'COMPLETED', label: 'Complete' },
+};
 
 export default function OrdersScreen({ navigation }: any) {
   const profile = useVendorStore(state => state.profile);
   const activeOrders = useVendorStore(state => state.activeOrders);
   const setProfile = useVendorStore(state => state.setProfile);
+  const upsertOrder = useVendorStore(state => state.upsertOrder);
   const isSynced = useVendorStore(state => state.isSynced);
 
   useVendorSocket(profile?.id);
@@ -31,28 +39,71 @@ export default function OrdersScreen({ navigation }: any) {
     onSuccess: data => setProfile(data.data),
   });
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
-        <StatusBadge status={item.status} />
-      </View>
-      <Text style={styles.items}>
-        {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-      </Text>
-      <View style={styles.cardFooter}>
-        <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
-        <Text style={styles.time}>
-          {new Date(item.createdAt).toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+  const updateStatus = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: OrderStatus }) =>
+      api.orders.updateStatus(orderId, status),
+    onSuccess: res => upsertOrder(res.data),
+    onError: (err: any) => {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to update status');
+    },
+  });
+
+  const renderOrder = ({ item }: { item: Order }) => {
+    const actions = CARD_ACTIONS[item.status];
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+        activeOpacity={0.8}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
+          <StatusBadge status={item.status} />
+        </View>
+        <Text style={styles.items} numberOfLines={2}>
+          {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
         </Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.cardFooter}>
+          <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
+          <Text style={styles.time}>
+            {new Date(item.createdAt).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        </View>
+
+        {actions && (
+          <View style={styles.cardActions}>
+            {actions.reject && (
+              <TouchableOpacity
+                style={styles.rejectButton}
+                onPress={() =>
+                  Alert.alert('Reject Order', 'Are you sure?', [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Reject',
+                      style: 'destructive',
+                      onPress: () => updateStatus.mutate({ orderId: item.id, status: 'REJECTED' }),
+                    },
+                  ])
+                }>
+                <Text style={styles.rejectText}>Reject</Text>
+              </TouchableOpacity>
+            )}
+            {actions.next && (
+              <TouchableOpacity
+                style={[styles.actionButton, !actions.reject && styles.actionButtonFull]}
+                onPress={() => updateStatus.mutate({ orderId: item.id, status: actions.next! })}
+                disabled={updateStatus.isPending}>
+                <Text style={styles.actionText}>{actions.label ?? actions.next}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   if (!isSynced) {
     return (
@@ -156,4 +207,30 @@ const styles = StyleSheet.create({
   },
   total: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   time: { fontSize: 13, color: colors.textSecondary },
+  cardActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
+  actionButton: {
+    flex: 2,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  actionButtonFull: { flex: 1 },
+  actionText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  rejectButton: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: colors.error,
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  rejectText: { color: colors.error, fontSize: 14, fontWeight: '700' },
 });
