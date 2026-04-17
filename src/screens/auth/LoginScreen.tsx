@@ -15,7 +15,7 @@ import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { colors, radius, spacing } from '../../theme';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,6 +85,12 @@ export default function LoginScreen() {
               <Text style={styles.buttonText}>Login</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.setupLink}
+            onPress={() => (navigation as any).navigate('SetupPassword')}>
+            <Text style={styles.setupLinkText}>New vendor? Set up your account →</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -137,4 +143,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  setupLink: { alignItems: 'center', paddingVertical: spacing.sm },
+  setupLinkText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
 });
