@@ -10,12 +10,13 @@ import {
   Platform,
   Alert,
   Linking,
+  ScrollView,
 } from 'react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { colors, radius, spacing } from '../../theme';
 
-export default function SetupPasswordScreen({ route }: any) {
+export default function SetupPasswordScreen({ route, navigation }: any) {
   const [token, setToken] = useState(route?.params?.token || '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -23,7 +24,6 @@ export default function SetupPasswordScreen({ route }: any) {
   const { setAuth } = useAuthStore();
 
   useEffect(() => {
-    // Handle deep link if arriving from cold start
     const handleUrl = ({ url }: { url: string }) => {
       const match = url.match(/token=([^&]+)/);
       if (match) setToken(match[1]);
@@ -36,6 +36,10 @@ export default function SetupPasswordScreen({ route }: any) {
   }, []);
 
   const handleSetup = async () => {
+    if (!token.trim()) {
+      Alert.alert('Error', 'Please enter your setup token');
+      return;
+    }
     if (!password || password.length < 8) {
       Alert.alert('Error', 'Password must be at least 8 characters');
       return;
@@ -46,7 +50,7 @@ export default function SetupPasswordScreen({ route }: any) {
     }
     try {
       setLoading(true);
-      const { data } = await api.auth.setupPassword(token, password);
+      const { data } = await api.auth.setupPassword(token.trim(), password);
       await setAuth(data.token, data.userId, data.name, data.email);
     } catch (err: any) {
       Alert.alert(
@@ -62,18 +66,29 @@ export default function SetupPasswordScreen({ route }: any) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.inner}>
+      <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={styles.logoBox}>
             <Text style={styles.logoText}>SQ</Text>
           </View>
-          <Text style={styles.title}>Welcome to SkipQ!</Text>
+          <Text style={styles.title}>Set Up Your Account</Text>
           <Text style={styles.subtitle}>
-            Set up your password to get started
+            Enter the token from your invite email and choose a password
           </Text>
         </View>
 
         <View style={styles.form}>
+          <Text style={styles.label}>Setup Token</Text>
+          <TextInput
+            style={styles.input}
+            value={token}
+            onChangeText={setToken}
+            placeholder="Paste your token here"
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
           <Text style={styles.label}>New Password</Text>
           <TextInput
             style={styles.input}
@@ -104,8 +119,14 @@ export default function SetupPasswordScreen({ route }: any) {
               <Text style={styles.buttonText}>Set Up My Account</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.backLink}
+            onPress={() => navigation.goBack()}>
+            <Text style={styles.backLinkText}>← Back to Login</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -113,9 +134,10 @@ export default function SetupPasswordScreen({ route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   inner: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   header: { alignItems: 'center', marginBottom: spacing.xl },
   logoBox: {
@@ -138,6 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
   form: { gap: spacing.sm },
   label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
@@ -160,4 +183,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  backLink: { alignItems: 'center', paddingVertical: spacing.sm },
+  backLinkText: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
 });
