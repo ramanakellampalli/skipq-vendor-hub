@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,47 +9,34 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ClipboardList } from 'lucide-react-native';
 import { api } from '../../api';
-import { colors, radius, spacing, status as statusMap } from '../../theme';
+import { colors, radius, spacing } from '../../theme';
 import { Order } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
-// import { useVendorSocket } from '../../hooks/useVendorSocket';
+import { useVendorStore } from '../../store/vendorStore';
+import { useVendorSocket } from '../../hooks/useVendorSocket';
 
 export default function OrdersScreen({ navigation }: any) {
-  const queryClient = useQueryClient();
+  const profile = useVendorStore(state => state.profile);
+  const activeOrders = useVendorStore(state => state.activeOrders);
+  const setProfile = useVendorStore(state => state.setProfile);
+  const isSynced = useVendorStore(state => state.isSynced);
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => api.vendor.getProfile().then(r => r.data),
-  });
-
-  const { data: orders = [], isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['vendorOrders'],
-    queryFn: () => api.orders.getAll().then(r => r.data),
-  });
+  useVendorSocket(profile?.id);
 
   const toggleOpen = useMutation({
-    mutationFn: (isOpen: boolean) =>
-      api.vendor.updateProfile({ isOpen }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
+    mutationFn: (isOpen: boolean) => api.vendor.updateProfile({ isOpen }),
+    onSuccess: data => setProfile(data.data),
   });
-
-  // useVendorSocket(profile?.id);
-
-  const activeOrders = orders.filter(
-    o => !['COMPLETED', 'REJECTED'].includes(o.status),
-  );
 
   const renderOrder = ({ item }: { item: Order }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}>
       <View style={styles.cardHeader}>
-        <Text style={styles.orderId}>
-          #{item.id.slice(0, 8).toUpperCase()}
-        </Text>
+        <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
         <StatusBadge status={item.status} />
       </View>
       <Text style={styles.items}>
@@ -67,7 +54,7 @@ export default function OrdersScreen({ navigation }: any) {
     </TouchableOpacity>
   );
 
-  if (isLoading) {
+  if (!isSynced) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={colors.primary} size="large" />
@@ -77,7 +64,6 @@ export default function OrdersScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.storeName}>{profile?.name ?? 'My Store'}</Text>
@@ -98,20 +84,12 @@ export default function OrdersScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Orders List */}
       <FlatList
         data={activeOrders}
         keyExtractor={item => item.id}
         renderItem={renderOrder}
         contentContainerStyle={
           activeOrders.length === 0 ? styles.emptyContainer : styles.listContent
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={colors.primary}
-          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>

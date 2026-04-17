@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQueryClient } from '@tanstack/react-query';
 import { BASE_WS_URL } from '../api/client';
+import { useVendorStore } from '../store/vendorStore';
+import { Order } from '../types';
 
 export function useVendorSocket(vendorId: string | undefined) {
-  const queryClient = useQueryClient();
+  const upsertOrder = useVendorStore(state => state.upsertOrder);
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -22,8 +23,9 @@ export function useVendorSocket(vendorId: string | undefined) {
         connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 5000,
         onConnect: () => {
-          stompClient.subscribe(`/topic/vendor/${vendorId}`, () => {
-            queryClient.invalidateQueries({ queryKey: ['vendorOrders'] });
+          stompClient.subscribe(`/topic/vendor/${vendorId}`, message => {
+            const order: Order = JSON.parse(message.body);
+            upsertOrder(order);
           });
         },
       });
@@ -39,5 +41,5 @@ export function useVendorSocket(vendorId: string | undefined) {
       clientRef.current?.deactivate();
       clientRef.current = null;
     };
-  }, [vendorId, queryClient]);
+  }, [vendorId, upsertOrder]);
 }

@@ -1,6 +1,13 @@
 import { client } from './client';
 import { Order, OrderStatus, MenuItem, VendorProfile } from '../types';
 
+export interface SyncResponse {
+  profile: VendorProfile;
+  activeOrders: Order[];
+  pastOrders: Order[];
+  menuItems: MenuItem[];
+}
+
 export const api = {
   auth: {
     login: (email: string, password: string) =>
@@ -10,6 +17,8 @@ export const api = {
   },
 
   vendor: {
+    sync: () =>
+      client.get<SyncResponse>('/api/v1/vendor/sync'),
     getProfile: () =>
       client.get<VendorProfile>('/api/v1/vendor/profile'),
     updateProfile: (data: Partial<VendorProfile>) =>

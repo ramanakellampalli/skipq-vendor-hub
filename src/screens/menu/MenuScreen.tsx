@@ -6,49 +6,46 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
-  ActivityIndicator,
   Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2 } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { MenuItem } from '../../types';
+import { useVendorStore } from '../../store/vendorStore';
 
 export default function MenuScreen() {
-  const queryClient = useQueryClient();
+  const menuItems = useVendorStore(state => state.menuItems);
+  const upsertMenuItem = useVendorStore(state => state.upsertMenuItem);
+  const removeMenuItem = useVendorStore(state => state.removeMenuItem);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ['menu'],
-    queryFn: () => api.menu.getAll().then(r => r.data),
-  });
-
   const createItem = useMutation({
     mutationFn: () =>
       api.menu.create({ name, price: parseFloat(price), isAvailable: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['menu'] });
+    onSuccess: res => {
+      upsertMenuItem(res.data);
       closeModal();
     },
   });
 
   const updateItem = useMutation({
-    mutationFn: (data: Partial<MenuItem>) =>
-      api.menu.update(editing!.id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu'] }),
+    mutationFn: (data: Partial<MenuItem>) => api.menu.update(editing!.id, data),
+    onSuccess: res => upsertMenuItem(res.data),
   });
 
   const deleteItem = useMutation({
     mutationFn: (id: string) => api.menu.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu'] }),
+    onSuccess: (_, id) => removeMenuItem(id),
   });
 
   const openAdd = () => {
@@ -115,23 +112,15 @@ export default function MenuScreen() {
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Menu</Text>
-        <Text style={styles.headerSub}>{items.length} items</Text>
+        <Text style={styles.headerSub}>{menuItems.length} items</Text>
       </View>
 
       <FlatList
-        data={items}
+        data={menuItems}
         keyExtractor={item => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -141,7 +130,6 @@ export default function MenuScreen() {
         <Plus size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* Add / Edit Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <KeyboardAvoidingView
           style={styles.modalOverlay}
@@ -189,7 +177,6 @@ export default function MenuScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     paddingHorizontal: spacing.md,
     paddingTop: 56,

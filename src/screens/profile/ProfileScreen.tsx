@@ -7,25 +7,22 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { LogOut } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
+import { useVendorStore } from '../../store/vendorStore';
 import { colors, radius, spacing } from '../../theme';
 
 export default function ProfileScreen() {
-  const queryClient = useQueryClient();
   const { logout, name, email } = useAuthStore();
+  const profile = useVendorStore(state => state.profile);
+  const setProfile = useVendorStore(state => state.setProfile);
+
   const [prepTime, setPrepTime] = useState('');
   const [editingPrepTime, setEditingPrepTime] = useState(false);
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => api.vendor.getProfile().then(r => r.data),
-  });
 
   useEffect(() => {
     if (profile?.prepTime != null) {
@@ -35,7 +32,7 @@ export default function ProfileScreen() {
 
   const updateProfile = useMutation({
     mutationFn: (data: any) => api.vendor.updateProfile(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
+    onSuccess: res => setProfile(res.data),
   });
 
   const handlePrepTimeSave = () => {
@@ -55,21 +52,12 @@ export default function ProfileScreen() {
     ]);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
-  }
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      {/* Store Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Store</Text>
         <View style={styles.row}>
@@ -118,7 +106,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Account Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.row}>
@@ -132,7 +119,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Logout */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <LogOut size={18} color={colors.error} />
         <Text style={styles.logoutText}>Logout</Text>
@@ -143,7 +129,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { paddingBottom: 40 },
   header: {
     paddingHorizontal: spacing.md,

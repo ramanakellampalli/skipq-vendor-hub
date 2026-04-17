@@ -1,30 +1,13 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { History } from 'lucide-react-native';
-import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { Order } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+import { useVendorStore } from '../../store/vendorStore';
 
 export default function HistoryScreen() {
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['vendorOrders'],
-    queryFn: () => api.orders.getAll().then(r => r.data),
-  });
-
-  const pastOrders = orders
-    .filter(o => ['COMPLETED', 'REJECTED'].includes(o.status))
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  const pastOrders = useVendorStore(state => state.pastOrders);
 
   const renderItem = ({ item }: { item: Order }) => (
     <View style={styles.card}>
@@ -48,14 +31,6 @@ export default function HistoryScreen() {
       </View>
     </View>
   );
-
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -87,7 +62,6 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     paddingHorizontal: spacing.md,
     paddingTop: 56,
