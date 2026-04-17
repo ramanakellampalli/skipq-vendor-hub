@@ -8,12 +8,13 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+import { useVendorStore } from '../../store/vendorStore';
 
 const STATUS_ACTIONS: Record<OrderStatus, { next?: OrderStatus; reject?: boolean }> = {
   PENDING: { next: 'ACCEPTED', reject: true },
@@ -33,21 +34,16 @@ const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 
 export default function OrderDetailScreen({ route, navigation }: any) {
   const { orderId } = route.params;
-  const queryClient = useQueryClient();
+  const upsertOrder = useVendorStore(state => state.upsertOrder);
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ['vendorOrders'],
-    queryFn: () => api.orders.getAll().then(r => r.data),
-  });
-
-  const order = orders.find(o => o.id === orderId);
+  const order = useVendorStore(state =>
+    [...state.activeOrders, ...state.pastOrders].find(o => o.id === orderId)
+  );
 
   const updateStatus = useMutation({
     mutationFn: (status: OrderStatus) =>
       api.orders.updateStatus(orderId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders'] });
-    },
+    onSuccess: res => upsertOrder(res.data),
     onError: (err: any) => {
       Alert.alert('Error', err.response?.data?.message || 'Failed to update status');
     },

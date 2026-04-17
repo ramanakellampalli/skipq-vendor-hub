@@ -1,4 +1,5 @@
 import React from 'react';
+import { Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -86,13 +87,22 @@ function MainNavigator() {
   );
 }
 
+const linking = {
+  prefixes: ['skipq://'],
+  config: {
+    screens: {
+      SetupPassword: 'vendor/setup',
+    },
+  },
+};
+
 export default function Navigation() {
   const { token, isLoading } = useAuthStore();
 
   if (isLoading) return null;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {token ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
