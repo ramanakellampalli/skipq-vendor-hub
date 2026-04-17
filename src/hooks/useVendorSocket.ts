@@ -1,44 +1,34 @@
 import { useEffect, useRef } from 'react';
-import { Client } from '@stomp/stompjs';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_WS_URL } from '../api/client';
+import Ably from 'ably';
 import { useVendorStore } from '../store/vendorStore';
 import { Order } from '../types';
 
+const ABLY_KEY = 'cIil4A.5cbJuA:dOD-GiNhWEfBA0fTgIP6lSHAtWXzR9PdO2_OVnOBhdA';
+
 export function useVendorSocket(vendorId: string | undefined) {
   const upsertOrder = useVendorStore(state => state.upsertOrder);
-  const clientRef = useRef<Client | null>(null);
+  const clientRef = useRef<Ably.Realtime | null>(null);
 
   useEffect(() => {
     if (!vendorId) return;
 
-    let active = true;
+    const client = new Ably.Realtime({
+      key: ABLY_KEY,
+      closeOnUnload: false,
+    });
 
-    const connect = async () => {
-      const token = await AsyncStorage.getItem('jwt');
-      if (!token || !active) return;
+    const channel = client.channels.get(`vendor:${vendorId}`);
 
-      const stompClient = new Client({
-        brokerURL: BASE_WS_URL,
-        connectHeaders: { Authorization: `Bearer ${token}` },
-        reconnectDelay: 5000,
-        onConnect: () => {
-          stompClient.subscribe(`/topic/vendor/${vendorId}`, message => {
-            const order: Order = JSON.parse(message.body);
-            upsertOrder(order);
-          });
-        },
-      });
+    channel.subscribe('order', message => {
+      const order: Order = JSON.parse(message.data);
+      upsertOrder(order);
+    });
 
-      stompClient.activate();
-      clientRef.current = stompClient;
-    };
-
-    connect();
+    clientRef.current = client;
 
     return () => {
-      active = false;
-      clientRef.current?.deactivate();
+      channel.unsubscribe();
+      client.close();
       clientRef.current = null;
     };
   }, [vendorId, upsertOrder]);
