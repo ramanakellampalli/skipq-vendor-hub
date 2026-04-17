@@ -1,0 +1,97 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { ClipboardList, UtensilsCrossed, Store, History } from 'lucide-react-native';
+
+import { useAuthStore } from '../store/authStore';
+import { colors } from '../theme';
+
+import LoginScreen from '../screens/auth/LoginScreen';
+import SetupPasswordScreen from '../screens/auth/SetupPasswordScreen';
+import OrdersScreen from '../screens/orders/OrdersScreen';
+import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
+import MenuScreen from '../screens/menu/MenuScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import HistoryScreen from '../screens/history/HistoryScreen';
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+const AuthStack = createStackNavigator();
+
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SetupPassword" component={SetupPasswordScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+function OrdersStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="OrdersList" component={OrdersScreen} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function MainNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: 60,
+          paddingBottom: 8,
+        },
+        tabBarLabelStyle: { fontSize: 12 },
+      }}>
+      <Tab.Screen
+        name="Orders"
+        component={OrdersStack}
+        options={{
+          tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Menu"
+        component={MenuScreen}
+        options={{
+          tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Store size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{
+          tabBarIcon: ({ color }) => <History size={22} color={color} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+export default function Navigation() {
+  const { token, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
+
+  return (
+    <NavigationContainer>
+      {token ? <MainNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
+}
