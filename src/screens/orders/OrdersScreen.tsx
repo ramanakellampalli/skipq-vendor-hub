@@ -15,6 +15,7 @@ import { api } from '../../api';
 import { colors, radius, spacing, status as statusMap } from '../../theme';
 import { Order } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+// import { useVendorSocket } from '../../hooks/useVendorSocket';
 
 export default function OrdersScreen({ navigation }: any) {
   const queryClient = useQueryClient();
@@ -27,7 +28,6 @@ export default function OrdersScreen({ navigation }: any) {
   const { data: orders = [], isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['vendorOrders'],
     queryFn: () => api.orders.getAll().then(r => r.data),
-    refetchInterval: 15000,
   });
 
   const toggleOpen = useMutation({
@@ -35,6 +35,8 @@ export default function OrdersScreen({ navigation }: any) {
       api.vendor.updateProfile({ isOpen }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
   });
+
+  // useVendorSocket(profile?.id);
 
   const activeOrders = orders.filter(
     o => !['COMPLETED', 'REJECTED'].includes(o.status),

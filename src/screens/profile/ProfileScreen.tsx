@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,10 +25,13 @@ export default function ProfileScreen() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: () => api.vendor.getProfile().then(r => r.data),
-    onSuccess: (data: any) => {
-      setPrepTime(data.prepTime.toString());
-    },
   });
+
+  useEffect(() => {
+    if (profile?.prepTime != null) {
+      setPrepTime(profile.prepTime.toString());
+    }
+  }, [profile?.prepTime]);
 
   const updateProfile = useMutation({
     mutationFn: (data: any) => api.vendor.updateProfile(data),
