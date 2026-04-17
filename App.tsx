@@ -5,19 +5,26 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Navigation from './src/navigation';
 import { useAuthStore } from './src/store/authStore';
+import { useVendorStore } from './src/store/vendorStore';
+import { api } from './src/api';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 30000 },
-  },
-});
+const queryClient = new QueryClient();
 
 function AppContent() {
-  const { loadFromStorage } = useAuthStore();
+  const { loadFromStorage, token } = useAuthStore();
+  const { setSync, reset } = useVendorStore();
 
   useEffect(() => {
     loadFromStorage();
   }, []);
+
+  useEffect(() => {
+    if (!token) {
+      reset();
+      return;
+    }
+    api.vendor.sync().then(res => setSync(res.data)).catch(() => {});
+  }, [token]);
 
   return <Navigation />;
 }
