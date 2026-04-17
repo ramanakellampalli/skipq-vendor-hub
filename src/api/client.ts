@@ -28,5 +28,3 @@ client.interceptors.response.use(
   },
 );
 
-export const BASE_WS_URL =
-  'wss://skipq-core-1014891107344.asia-south1.run.app/ws';
