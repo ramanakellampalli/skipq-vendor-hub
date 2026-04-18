@@ -92,7 +92,7 @@ export default function SetupKYCScreen({ route, navigation }: any) {
             style={styles.input}
             value={businessName}
             onChangeText={setBusinessName}
-            placeholder="e.g. Ramana's Canteen"
+            placeholder="e.g. Campus Canteen"
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="words"
           />
