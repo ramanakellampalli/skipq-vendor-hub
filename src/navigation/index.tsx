@@ -13,6 +13,7 @@ import { colors } from '../theme';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import SetupPasswordScreen from '../screens/auth/SetupPasswordScreen';
+import SetupKYCScreen from '../screens/auth/SetupKYCScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import MenuScreen from '../screens/menu/MenuScreen';
@@ -28,6 +29,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="SetupPassword" component={SetupPasswordScreen} />
+      <AuthStack.Screen name="SetupKYC" component={SetupKYCScreen} />
     </AuthStack.Navigator>
   );
 }
