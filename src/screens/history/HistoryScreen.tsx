@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
+    flexShrink: 0,
   },
   pillActive: {
     backgroundColor: colors.primary,
