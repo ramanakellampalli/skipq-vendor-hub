@@ -129,6 +129,51 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Business & Payouts</Text>
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>KYC Status</Text>
+          <View style={[styles.badge, profile?.kycApproved ? styles.badgeSuccess : styles.badgePending]}>
+            <Text style={[styles.badgeText, profile?.kycApproved ? styles.badgeSuccessText : styles.badgePendingText]}>
+              {profile?.kycApproved ? 'Verified' : 'Pending'}
+            </Text>
+          </View>
+        </View>
+        {!profile?.kycApproved && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.kycNote}>
+                Your payouts are on hold until Razorpay verifies your KYC. This usually takes 24–48 hours.
+              </Text>
+            </View>
+          </>
+        )}
+        {profile?.businessName && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Business Name</Text>
+              <Text style={styles.rowValue}>{profile.businessName}</Text>
+            </View>
+          </>
+        )}
+        <View style={styles.divider} />
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>GST Registered</Text>
+          <Text style={styles.rowValue}>{profile?.gstRegistered ? 'Yes' : 'No'}</Text>
+        </View>
+        {profile?.gstRegistered && profile?.gstin && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>GSTIN</Text>
+              <Text style={styles.rowValue}>{profile.gstin}</Text>
+            </View>
+          </>
+        )}
+      </View>
+
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <LogOut size={18} color={colors.error} />
         <Text style={styles.logoutText}>Logout</Text>
@@ -211,4 +256,20 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  badgeSuccess: { backgroundColor: '#e6f4ea' },
+  badgePending: { backgroundColor: '#fff3e0' },
+  badgeText: { fontSize: 13, fontWeight: '700' },
+  badgeSuccessText: { color: colors.success },
+  badgePendingText: { color: '#f57c00' },
+  kycNote: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    flex: 1,
+  },
 });
