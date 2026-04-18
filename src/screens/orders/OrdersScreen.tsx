@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Switch,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useMutation } from '@tanstack/react-query';
 import { ClipboardList } from 'lucide-react-native';
 import { api } from '../../api';
@@ -17,6 +19,7 @@ import { Order, OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import { useVendorStore } from '../../store/vendorStore';
 import { useVendorSocket } from '../../hooks/useVendorSocket';
+import { timeAgo } from '../../utils/time';
 
 const CARD_ACTIONS: Partial<Record<OrderStatus, { next?: OrderStatus; reject?: boolean; label?: string }>> = {
   PENDING:   { next: 'ACCEPTED', reject: true, label: 'Accept' },
@@ -25,12 +28,31 @@ const CARD_ACTIONS: Partial<Record<OrderStatus, { next?: OrderStatus; reject?: b
   READY:     { next: 'COMPLETED', label: 'Complete' },
 };
 
+function statusSummary(orders: Order[]): string {
+  const counts: Partial<Record<string, number>> = {};
+  for (const o of orders) {
+    const key =
+      o.status === 'PENDING' ? 'pending' :
+      o.status === 'ACCEPTED' || o.status === 'PREPARING' ? 'preparing' :
+      o.status === 'READY' ? 'ready' : null;
+    if (key) counts[key] = (counts[key] ?? 0) + 1;
+  }
+  const parts = (['pending', 'preparing', 'ready'] as const)
+    .filter(k => counts[k])
+    .map(k => `${counts[k]} ${k}`);
+  return parts.length ? parts.join(' · ') : 'No active orders';
+}
+
 export default function OrdersScreen({ navigation }: any) {
   const profile = useVendorStore(state => state.profile);
   const activeOrders = useVendorStore(state => state.activeOrders);
   const setProfile = useVendorStore(state => state.setProfile);
+  const setSync = useVendorStore(state => state.setSync);
   const upsertOrder = useVendorStore(state => state.upsertOrder);
   const isSynced = useVendorStore(state => state.isSynced);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   useVendorSocket(profile?.id);
 
@@ -48,60 +70,114 @@ export default function OrdersScreen({ navigation }: any) {
     },
   });
 
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { data } = await api.vendor.sync();
+      setSync(data);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [setSync]);
+
+  const closeSwipeable = (orderId: string) => {
+    swipeableRefs.current.get(orderId)?.close();
+  };
+
+  const renderAdvanceAction = (item: Order, next: OrderStatus, label: string) => (
+    <TouchableOpacity
+      style={[styles.swipeAction, styles.swipeAdvance]}
+      onPress={() => {
+        closeSwipeable(item.id);
+        updateStatus.mutate({ orderId: item.id, status: next });
+      }}>
+      <Text style={styles.swipeLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderRejectAction = (item: Order) => (
+    <TouchableOpacity
+      style={[styles.swipeAction, styles.swipeReject]}
+      onPress={() => {
+        closeSwipeable(item.id);
+        Alert.alert('Reject Order', 'Are you sure?', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reject',
+            style: 'destructive',
+            onPress: () => updateStatus.mutate({ orderId: item.id, status: 'REJECTED' }),
+          },
+        ]);
+      }}>
+      <Text style={styles.swipeLabel}>Reject</Text>
+    </TouchableOpacity>
+  );
+
   const renderOrder = ({ item }: { item: Order }) => {
     const actions = CARD_ACTIONS[item.status];
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
-        activeOpacity={0.8}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
-          <StatusBadge status={item.status} />
-        </View>
-        <Text style={styles.items} numberOfLines={2}>
-          {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-        </Text>
-        <View style={styles.cardFooter}>
-          <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
-          <Text style={styles.time}>
-            {new Date(item.createdAt).toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
-        </View>
-
-        {actions && (
-          <View style={styles.cardActions}>
-            {actions.reject && (
-              <TouchableOpacity
-                style={styles.rejectButton}
-                onPress={() =>
-                  Alert.alert('Reject Order', 'Are you sure?', [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Reject',
-                      style: 'destructive',
-                      onPress: () => updateStatus.mutate({ orderId: item.id, status: 'REJECTED' }),
-                    },
-                  ])
-                }>
-                <Text style={styles.rejectText}>Reject</Text>
-              </TouchableOpacity>
-            )}
-            {actions.next && (
-              <TouchableOpacity
-                style={[styles.actionButton, !actions.reject && styles.actionButtonFull]}
-                onPress={() => updateStatus.mutate({ orderId: item.id, status: actions.next! })}
-                disabled={updateStatus.isPending}>
-                <Text style={styles.actionText}>{actions.label ?? actions.next}</Text>
-              </TouchableOpacity>
-            )}
+      <Swipeable
+        ref={ref => {
+          if (ref) swipeableRefs.current.set(item.id, ref);
+          else swipeableRefs.current.delete(item.id);
+        }}
+        friction={2}
+        overshootFriction={8}
+        renderLeftActions={
+          actions?.next
+            ? () => renderAdvanceAction(item, actions.next!, actions.label ?? actions.next!)
+            : undefined
+        }
+        renderRightActions={
+          actions?.reject ? () => renderRejectAction(item) : undefined
+        }>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+          activeOpacity={0.8}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
+            <StatusBadge status={item.status} />
           </View>
-        )}
-      </TouchableOpacity>
+          <Text style={styles.items} numberOfLines={2}>
+            {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+          </Text>
+          <View style={styles.cardFooter}>
+            <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
+            <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
+          </View>
+
+          {actions && (
+            <View style={styles.cardActions}>
+              {actions.reject && (
+                <TouchableOpacity
+                  style={styles.rejectButton}
+                  onPress={() =>
+                    Alert.alert('Reject Order', 'Are you sure?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Reject',
+                        style: 'destructive',
+                        onPress: () => updateStatus.mutate({ orderId: item.id, status: 'REJECTED' }),
+                      },
+                    ])
+                  }>
+                  <Text style={styles.rejectText}>Reject</Text>
+                </TouchableOpacity>
+              )}
+              {actions.next && (
+                <TouchableOpacity
+                  style={[styles.actionButton, !actions.reject && styles.actionButtonFull]}
+                  onPress={() => updateStatus.mutate({ orderId: item.id, status: actions.next! })}
+                  disabled={updateStatus.isPending}>
+                  <Text style={styles.actionText}>{actions.label ?? actions.next}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -118,9 +194,7 @@ export default function OrdersScreen({ navigation }: any) {
       <View style={styles.header}>
         <View>
           <Text style={styles.storeName}>{profile?.name ?? 'My Store'}</Text>
-          <Text style={styles.headerSub}>
-            {activeOrders.length} active order{activeOrders.length !== 1 ? 's' : ''}
-          </Text>
+          <Text style={styles.headerSub}>{statusSummary(activeOrders)}</Text>
         </View>
         <View style={styles.toggleRow}>
           <Text style={[styles.toggleLabel, { color: profile?.isOpen ? colors.success : colors.textSecondary }]}>
@@ -141,6 +215,14 @@ export default function OrdersScreen({ navigation }: any) {
         renderItem={renderOrder}
         contentContainerStyle={
           activeOrders.length === 0 ? styles.emptyContainer : styles.listContent
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -185,6 +267,16 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 90,
+    borderRadius: radius.md,
+    marginVertical: 2,
+  },
+  swipeAdvance: { backgroundColor: colors.success },
+  swipeReject: { backgroundColor: colors.error },
+  swipeLabel: { color: '#fff', fontSize: 13, fontWeight: '700' },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
