@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { History } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
@@ -83,11 +83,7 @@ export default function HistoryScreen({ navigation }: any) {
         </Text>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterRow}>
+      <View style={styles.filterRow}>
         {FILTERS.map(f => (
           <TouchableOpacity
             key={f.key}
@@ -98,7 +94,7 @@ export default function HistoryScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       <FlatList
         data={filtered}
@@ -141,25 +137,23 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  filterScroll: {
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
   pill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    flex: 1,
+    paddingVertical: 8,
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
-    marginRight: spacing.sm,
+    alignItems: 'center',
   },
   pillActive: {
     backgroundColor: colors.primary,
