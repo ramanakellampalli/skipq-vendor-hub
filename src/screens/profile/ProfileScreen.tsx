@@ -212,11 +212,3 @@ const styles = StyleSheet.create({
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
 });
-lors.error },
-});
-
-  },
-  logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
-});
-lors.error },
-});
