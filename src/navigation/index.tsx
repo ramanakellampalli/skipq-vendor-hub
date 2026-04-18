@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '../store/authStore';
 import { useVendorStore } from '../store/vendorStore';
+import { api } from '../api';
 import { colors } from '../theme';
 
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -104,6 +105,12 @@ const linking = {
 
 export default function Navigation() {
   const { token, isLoading } = useAuthStore();
+  const setSync = useVendorStore(state => state.setSync);
+
+  useEffect(() => {
+    if (!token) return;
+    api.vendor.sync().then(res => setSync(res.data)).catch(() => {});
+  }, [token, setSync]);
 
   if (isLoading) return null;
 
