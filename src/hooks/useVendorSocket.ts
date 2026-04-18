@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Vibration } from 'react-native';
 import Ably from 'ably';
+import Config from 'react-native-config';
 import { useVendorStore } from '../store/vendorStore';
 import { Order } from '../types';
-
-const ABLY_KEY = 'cIil4A.5cbJuA:dOD-GiNhWEfBA0fTgIP6lSHAtWXzR9PdO2_OVnOBhdA';
 const NEW_ORDER_PATTERN = [0, 300, 150, 300];
 
 export function useVendorSocket(vendorId: string | undefined) {
@@ -21,7 +20,7 @@ export function useVendorSocket(vendorId: string | undefined) {
   useEffect(() => {
     if (!vendorId) return;
 
-    const client = new Ably.Realtime({ key: ABLY_KEY, closeOnUnload: false });
+    const client = new Ably.Realtime({ key: Config.ABLY_API_KEY, closeOnUnload: false });
     const channel = client.channels.get(`vendor:${vendorId}`);
 
     channel.subscribe('order', message => {
