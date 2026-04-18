@@ -12,8 +12,6 @@ import {
   Linking,
   ScrollView,
 } from 'react-native';
-import { api } from '../../api';
-import { useAuthStore } from '../../store/authStore';
 import { colors, radius, spacing } from '../../theme';
 
 export default function SetupPasswordScreen({ route, navigation }: any) {
@@ -21,7 +19,6 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setAuth } = useAuthStore();
 
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {
@@ -35,7 +32,7 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
     return () => sub.remove();
   }, []);
 
-  const handleSetup = async () => {
+  const handleNext = () => {
     if (!token.trim()) {
       Alert.alert('Error', 'Please enter your setup token');
       return;
@@ -48,18 +45,7 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    try {
-      setLoading(true);
-      const { data } = await api.auth.setupPassword(token.trim(), password);
-      await setAuth(data.token, data.userId, data.name, data.email);
-    } catch (err: any) {
-      Alert.alert(
-        'Setup Failed',
-        err.response?.data?.message || 'Invalid or expired token',
-      );
-    } finally {
-      setLoading(false);
-    }
+    navigation.navigate('SetupKYC', { token: token.trim(), password });
   };
 
   return (
@@ -75,6 +61,10 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
           <Text style={styles.subtitle}>
             Enter the token from your invite email and choose a password
           </Text>
+          <View style={styles.stepRow}>
+            <View style={[styles.step, styles.stepActive]} />
+            <View style={styles.step} />
+          </View>
         </View>
 
         <View style={styles.form}>
@@ -97,6 +87,7 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
             placeholder="Minimum 8 characters"
             placeholderTextColor={colors.textSecondary}
             secureTextEntry
+            autoCapitalize="none"
           />
 
           <Text style={styles.label}>Confirm Password</Text>
@@ -107,22 +98,21 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
             placeholder="Re-enter your password"
             placeholderTextColor={colors.textSecondary}
             secureTextEntry
+            autoCapitalize="none"
           />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSetup}
+            onPress={handleNext}
             disabled={loading}>
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Set Up My Account</Text>
+              <Text style={styles.buttonText}>Next →</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.backLink}
-            onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
             <Text style={styles.backLinkText}>← Back to Login</Text>
           </TouchableOpacity>
         </View>
@@ -150,18 +140,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   logoText: { color: '#fff', fontSize: 28, fontWeight: '800' },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.navy,
-    marginBottom: 4,
-  },
+  title: { fontSize: 24, fontWeight: '700', color: colors.navy, marginBottom: 4 },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: spacing.md,
   },
+  stepRow: { flexDirection: 'row', gap: 8, marginTop: spacing.sm },
+  step: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+  },
+  stepActive: { backgroundColor: colors.primary },
   form: { gap: spacing.sm },
   label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   input: {

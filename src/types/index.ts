@@ -41,4 +41,8 @@ export interface VendorProfile {
   isOpen: boolean;
   prepTime: number;
   email: string;
+  businessName?: string;
+  gstRegistered: boolean;
+  gstin?: string;
+  kycApproved: boolean;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,25 +10,49 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
+import {
+  isBiometricAvailable,
+  getBiometricLabel,
+  promptBiometric,
+  saveCredentials,
+  getCredentials,
+  hasSavedCredentials,
+} from '../../utils/biometrics';
 import { colors, radius, spacing } from '../../theme';
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
   const { setAuth } = useAuthStore();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter your email and password');
-      return;
-    }
+  useEffect(() => {
+    const tryBiometricAutoPrompt = async () => {
+      const available = await isBiometricAvailable();
+      if (!available) return;
+
+      const label = await getBiometricLabel();
+      const hasCreds = await hasSavedCredentials();
+      if (hasCreds) {
+        setBiometricLabel(label);
+        const success = await promptBiometric(`Sign in to SkipQ Vendor with ${label}`);
+        if (success) {
+          const creds = await getCredentials();
+          if (creds) await doLogin(creds.email, creds.password);
+        }
+      }
+    };
+    tryBiometricAutoPrompt();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const doLogin = async (loginEmail: string, loginPassword: string) => {
     try {
       setLoading(true);
-      const { data } = await api.auth.login(email.trim(), password);
+      const { data } = await api.auth.login(loginEmail.trim(), loginPassword);
       await setAuth(data.token, data.userId, data.name, data.email);
     } catch (err: any) {
       Alert.alert(
@@ -37,6 +61,43 @@ export default function LoginScreen({ navigation }: any) {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter your email and password');
+      return;
+    }
+    await doLogin(email, password);
+
+    const available = await isBiometricAvailable();
+    if (available) {
+      const label = await getBiometricLabel();
+      Alert.alert(
+        'Enable Biometric Login',
+        `Would you like to sign in with ${label} next time?`,
+        [
+          { text: 'Not Now', style: 'cancel' },
+          {
+            text: 'Enable',
+            onPress: () => saveCredentials(email.trim(), password),
+          },
+        ],
+      );
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    const label = biometricLabel ?? 'Biometrics';
+    const success = await promptBiometric(`Sign in to SkipQ Vendor with ${label}`);
+    if (success) {
+      const creds = await getCredentials();
+      if (creds) {
+        await doLogin(creds.email, creds.password);
+      } else {
+        setBiometricLabel(null);
+      }
     }
   };
 
@@ -73,6 +134,7 @@ export default function LoginScreen({ navigation }: any) {
             placeholder="••••••••"
             placeholderTextColor={colors.textSecondary}
             secureTextEntry
+            autoCapitalize="none"
           />
 
           <TouchableOpacity
@@ -85,6 +147,15 @@ export default function LoginScreen({ navigation }: any) {
               <Text style={styles.buttonText}>Login</Text>
             )}
           </TouchableOpacity>
+
+          {biometricLabel && !loading && (
+            <TouchableOpacity
+              style={styles.biometricBtn}
+              onPress={handleBiometricLogin}
+              activeOpacity={0.8}>
+              <Text style={styles.biometricText}>Sign in with {biometricLabel}</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={styles.setupLink}
@@ -143,6 +214,14 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  biometricBtn: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  biometricText: { fontSize: 15, fontWeight: '600', color: colors.primary },
   setupLink: { alignItems: 'center', paddingVertical: spacing.sm },
   setupLinkText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
 });
