@@ -86,6 +86,7 @@ export default function HistoryScreen({ navigation }: any) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filterRow}>
         {FILTERS.map(f => (
           <TouchableOpacity
@@ -140,14 +141,16 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  filterScroll: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   pill: {
     paddingHorizontal: spacing.md,
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
-    flexShrink: 0,
+    marginRight: spacing.sm,
   },
   pillActive: {
     backgroundColor: colors.primary,
