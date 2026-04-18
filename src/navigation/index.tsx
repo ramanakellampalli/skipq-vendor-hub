@@ -79,17 +79,17 @@ function MainNavigator() {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Store size={22} color={color} />,
-        }}
-      />
-      <Tab.Screen
         name="History"
         component={HistoryScreen}
         options={{
           tabBarIcon: ({ color }) => <History size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Store size={22} color={color} />,
         }}
       />
     </Tab.Navigator>
