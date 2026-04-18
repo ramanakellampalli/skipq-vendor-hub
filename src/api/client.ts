@@ -18,11 +18,16 @@ client.interceptors.request.use(async config => {
   return config;
 });
 
+const AUTH_ENDPOINTS = ['/api/v1/auth/login', '/api/v1/auth/setup-password'];
+
 client.interceptors.response.use(
   res => res,
   async error => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url ?? '';
+    if (error.response?.status === 401 && !AUTH_ENDPOINTS.some(e => url.includes(e))) {
       await AsyncStorage.removeItem('jwt');
+      const { useAuthStore } = await import('../store/authStore');
+      useAuthStore.setState({ token: null, userId: null, name: null, email: null });
     }
     return Promise.reject(error);
   },
