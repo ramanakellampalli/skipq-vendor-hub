@@ -14,7 +14,7 @@ import { LogOut } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
-import { clearCredentials, hasSavedCredentials } from '../../utils/biometrics';
+import { hasSavedCredentials } from '../../utils/biometrics';
 import { colors, radius, spacing } from '../../theme';
 
 export default function ProfileScreen() {
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     const hasBiometrics = await hasSavedCredentials();
     const message = hasBiometrics
-      ? 'You will be logged out and biometric login will be disabled. You can re-enable it after signing back in.'
+      ? 'You will be logged out. Use your fingerprint to sign back in quickly.'
       : 'Are you sure you want to logout?';
 
     Alert.alert('Logout', message, [
@@ -57,10 +57,7 @@ export default function ProfileScreen() {
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: async () => {
-          await clearCredentials();
-          logout();
-        },
+        onPress: () => logout(),
       },
     ]);
   };
@@ -214,4 +211,12 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
+});
+lors.error },
+});
+
+  },
+  logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
+});
+lors.error },
 });
