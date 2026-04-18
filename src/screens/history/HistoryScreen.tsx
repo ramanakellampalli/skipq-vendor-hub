@@ -1,42 +1,52 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { History } from 'lucide-react-native';
+import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { Order } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import { useVendorStore } from '../../store/vendorStore';
+import { timeAgo } from '../../utils/time';
 
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }: any) {
   const pastOrders = useVendorStore(state => state.pastOrders);
+  const setSync = useVendorStore(state => state.setSync);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { data } = await api.vendor.sync();
+      setSync(data);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [setSync]);
 
   const renderItem = ({ item }: { item: Order }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('Orders', { screen: 'OrderDetail', params: { orderId: item.id } })}>
       <View style={styles.cardHeader}>
         <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
         <StatusBadge status={item.status} />
       </View>
-      <Text style={styles.items}>
+      <Text style={styles.items} numberOfLines={2}>
         {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
       </Text>
       <View style={styles.cardFooter}>
         <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
-        <Text style={styles.date}>
-          {new Date(item.createdAt).toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </Text>
+        <Text style={styles.date}>{timeAgo(item.createdAt)}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>History</Text>
-        <Text style={styles.headerSub}>{pastOrders.length} orders</Text>
+        <Text style={styles.headerSub}>{pastOrders.length} order{pastOrders.length !== 1 ? 's' : ''}</Text>
       </View>
 
       <FlatList
@@ -45,6 +55,14 @@ export default function HistoryScreen() {
         renderItem={renderItem}
         contentContainerStyle={
           pastOrders.length === 0 ? styles.emptyContainer : styles.list
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>

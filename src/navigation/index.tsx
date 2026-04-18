@@ -7,6 +7,7 @@ import { ClipboardList, UtensilsCrossed, Store, History } from 'lucide-react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '../store/authStore';
+import { useVendorStore } from '../store/vendorStore';
 import { colors } from '../theme';
 
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -41,6 +42,9 @@ function OrdersStack() {
 
 function MainNavigator() {
   const insets = useSafeAreaInsets();
+  const pendingCount = useVendorStore(state =>
+    state.activeOrders.filter(o => o.status === 'PENDING').length
+  );
   return (
     <Tab.Navigator
       screenOptions={{
@@ -60,6 +64,8 @@ function MainNavigator() {
         component={OrdersStack}
         options={{
           tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.error, fontSize: 11 },
         }}
       />
       <Tab.Screen
