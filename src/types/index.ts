@@ -45,4 +45,5 @@ export interface VendorProfile {
   gstRegistered: boolean;
   gstin?: string;
   kycApproved: boolean;
+  campusName?: string;
 }
