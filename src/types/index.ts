@@ -18,13 +18,15 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  vendorId: string;
-  vendorName: string;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  totalAmount: number;
-  estimatedReadyAt: string;
-  createdAt: string;
+  vendor: { id: string; name: string };
+  state: { orderStatus: OrderStatus; paymentStatus: PaymentStatus };
+  pricing: {
+    subtotal: number;
+    tax: { cgst: number; sgst: number; igst: number; totalTax: number };
+    fees: { platformFee: number; paymentTerminalFee: number; totalServiceFee: number };
+    totalAmount: number;
+  };
+  timeline: { createdAt: string; estimatedReadyAt: string };
   items: OrderItem[];
 }
 
@@ -45,4 +47,5 @@ export interface VendorProfile {
   gstRegistered: boolean;
   gstin?: string;
   kycApproved: boolean;
+  campusName?: string;
 }

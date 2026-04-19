@@ -32,9 +32,9 @@ function statusSummary(orders: Order[]): string {
   const counts: Partial<Record<string, number>> = {};
   for (const o of orders) {
     const key =
-      o.status === 'PENDING' ? 'pending' :
-      o.status === 'ACCEPTED' || o.status === 'PREPARING' ? 'preparing' :
-      o.status === 'READY' ? 'ready' : null;
+      o.state.orderStatus === 'PENDING' ? 'pending' :
+      o.state.orderStatus === 'ACCEPTED' || o.state.orderStatus === 'PREPARING' ? 'preparing' :
+      o.state.orderStatus === 'READY' ? 'ready' : null;
     if (key) counts[key] = (counts[key] ?? 0) + 1;
   }
   const parts = (['pending', 'preparing', 'ready'] as const)
@@ -114,7 +114,7 @@ export default function OrdersScreen({ navigation }: any) {
   );
 
   const renderOrder = ({ item }: { item: Order }) => {
-    const actions = CARD_ACTIONS[item.status];
+    const actions = CARD_ACTIONS[item.state.orderStatus];
 
     return (
       <Swipeable
@@ -138,14 +138,14 @@ export default function OrdersScreen({ navigation }: any) {
           activeOpacity={0.8}>
           <View style={styles.cardHeader}>
             <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
-            <StatusBadge status={item.status} />
+            <StatusBadge status={item.state.orderStatus} />
           </View>
           <Text style={styles.items} numberOfLines={2}>
             {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
           </Text>
           <View style={styles.cardFooter}>
-            <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
-            <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
+            <Text style={styles.total}>₹{item.pricing.totalAmount.toFixed(2)}</Text>
+            <Text style={styles.time}>{timeAgo(item.timeline.createdAt)}</Text>
           </View>
 
           {actions && (

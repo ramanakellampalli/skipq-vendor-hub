@@ -74,6 +74,15 @@ export default function ProfileScreen() {
           <Text style={styles.rowLabel}>Name</Text>
           <Text style={styles.rowValue}>{profile?.name}</Text>
         </View>
+        {profile?.campusName && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Campus</Text>
+              <Text style={styles.rowValue}>{profile.campusName}</Text>
+            </View>
+          </>
+        )}
         <View style={styles.divider} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Status</Text>
