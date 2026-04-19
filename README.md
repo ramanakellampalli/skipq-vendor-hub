@@ -1,41 +1,52 @@
-# SkipQ — Vendor Hub
+<p align="center">
+  <h1 align="center">⚡ SkipQ — Vendor Hub</h1>
+  <p align="center">Manage your campus stall. Receive orders instantly.</p>
+</p>
 
-> Manage your campus stall. Receive orders instantly.
+<p align="center">
+  <img src="https://img.shields.io/badge/React_Native-0.85-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Real--time-Ably-FF5416?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
+</p>
 
-The vendor-facing mobile app for SkipQ. Accept incoming orders in real time, manage your menu, and control your store — all from your Android device.
+---
 
-Built with **React Native** (bare workflow), Android-first.
+## What is SkipQ?
+
+SkipQ is a campus food ordering platform. Students order ahead — vendors receive and fulfill. No missed orders, no shouting across a counter.
+
+This is the **vendor-facing Android app**.
 
 ---
 
 ## Features
 
-- **Live order feed** — new orders appear instantly via Ably push, no refresh needed
-- **Order management** — accept, mark ready, complete or reject orders with one tap
-- **Menu editor** — add items, set prices, toggle availability, delete
-- **Store control** — toggle open/closed, update prep time
-- **Order history** — view all past completed and rejected orders
-- **Campus-linked** — your stall is tied to your campus; only students from that campus see you
+| | |
+|---|---|
+| 📡 **Live order feed** | New orders arrive instantly via Ably push — no refresh needed |
+| ✅ **Order management** | Accept → Preparing → Ready → Done in one tap |
+| 🍽️ **Menu editor** | Add items, set prices, toggle availability, delete |
+| 🔓 **Store control** | Toggle open/closed, set default prep time |
+| 📋 **Order history** | All past completed and rejected orders |
+| 🏫 **Campus-linked** | Your stall is scoped to your campus — only your students see you |
 
 ---
 
-## Tech Stack
+## Real-Time Architecture
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | React Native 0.85 (bare workflow) |
-| Language | TypeScript |
-| State | Zustand |
-| Navigation | React Navigation (bottom tabs + stack) |
-| Real-time | Ably (WebSocket push) |
-| API | Axios + react-native-config (env-based URL) |
-| Auth | JWT + AsyncStorage |
+```
+  Student places order
+          ↓
+   Spring Boot backend
+          ↓
+   Publishes to Ably: vendor:{vendorId}
+          ↓
+   Vendor app receives event instantly
+   (subscribed on login — no polling)
+```
 
----
-
-## Real-Time Orders
-
-On login the app subscribes to the `vendor:{vendorId}` Ably channel. The backend publishes to this channel whenever a student places an order or an order state changes. No polling — orders arrive in under a second.
+Orders arrive in **under a second**. The Zustand store is the single source of truth — all tabs stay in sync automatically.
 
 ---
 
@@ -58,7 +69,7 @@ npm install
 
 ### Environment
 
-Create a `.env` file in the project root (gitignored):
+Create `.env` in the project root (gitignored):
 
 ```env
 API_URL=https://skipq-core-dev-obh3j3jqpa-el.a.run.app
@@ -67,38 +78,36 @@ API_URL=https://skipq-core-dev-obh3j3jqpa-el.a.run.app
 ### Run
 
 ```bash
-# Start Metro bundler
+# Start Metro
 npx react-native start
 
-# Build and install on device / emulator (in a separate terminal)
+# Build + install on device (separate terminal)
 cd android && ./gradlew app:assembleDebug --no-daemon
 ~/Library/Android/sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Reverse Metro port so the device can reach your machine
+# Forward Metro port to device
 ~/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081
 ```
 
-> **Tip:** If the build fails after clearing `~/.gradle/caches`, run with `--no-daemon` to let Gradle recreate the transform cache cleanly.
+> **Build tip:** If the build fails after clearing `~/.gradle/caches`, always run with `--no-daemon` to let Gradle recreate the transform cache cleanly.
 
 ---
 
 ## Dev Testing
 
-Vendor accounts on the dev backend are created via the **Admin Hub**. When `otp.bypass=true` is active on the backend (dev only), accounts are ready to use immediately — no invite email.
+### ✅ Create a test vendor (dev backend)
 
-### Create a test vendor (dev)
-
-1. Log into the Admin Hub with an admin account
+1. Log into the **Admin Hub**
 2. Go to **Vendors → Create Vendor**
-3. Fill in any email (e.g. `vendor1@test.skipq.dev`) and stall details
-4. Log into this app with:
+3. Use any email — e.g. `vendor1@test.skipq.dev`
+4. Log into this app immediately with:
 
 | Field | Value |
 |-------|-------|
 | Email | The email you entered |
 | Password | `Test@1234` |
 
-No email needed, no setup flow — straight into the app.
+No invite email. No setup flow. Straight in. 🎉
 
 ### Vendor onboarding (prod)
 
@@ -108,7 +117,7 @@ In production, creating a vendor triggers an invite email with a deep link:
 skipq://vendor/setup?token=xxx
 ```
 
-The vendor taps the link on their Android device → opens the Setup Password screen → sets their password and business details → account activated.
+The vendor taps the link on their Android device → **Setup Password screen** → sets password + business details → account activated.
 
 ---
 
@@ -117,15 +126,15 @@ The vendor taps the link on their Android device → opens the Setup Password sc
 ```
 src/
 ├── api/            # Axios client + typed API calls
-├── components/     # Shared UI (OrderCard, StatusBadge, etc.)
-├── hooks/          # useVendorSocket (Ably real-time)
+├── components/     # Shared UI: OrderCard, StatusBadge, etc.
+├── hooks/          # useVendorSocket — Ably real-time subscription
 ├── navigation/     # Stack + tab navigators, deep link config
 ├── screens/
-│   ├── auth/       # LoginScreen, SetupPasswordScreen
-│   ├── history/    # HistoryScreen
-│   ├── menu/       # MenuScreen
-│   ├── orders/     # OrdersScreen, OrderDetailScreen
-│   └── profile/    # ProfileScreen
+│   ├── auth/       # Login, SetupPassword
+│   ├── history/    # Past orders
+│   ├── menu/       # Menu management
+│   ├── orders/     # Live order feed + order detail
+│   └── profile/    # Store profile
 ├── store/          # Zustand: authStore, vendorStore
 ├── theme/          # Colors, typography, spacing
 └── types/          # Shared TypeScript types
@@ -137,6 +146,6 @@ src/
 
 | Variable | Description |
 |----------|-------------|
-| `API_URL` | Backend base URL (dev or prod) |
+| `API_URL` | Backend base URL |
 
-Managed via `react-native-config`. Values in `.env` are injected at build time.
+Managed via `react-native-config`. Set in `.env` — injected at build time.
