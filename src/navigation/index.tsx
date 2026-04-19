@@ -46,7 +46,7 @@ function OrdersStack() {
 function MainNavigator() {
   const insets = useSafeAreaInsets();
   const pendingCount = useVendorStore(state =>
-    state.activeOrders.filter(o => o.status === 'PENDING').length
+    state.activeOrders.filter(o => o.state.orderStatus === 'PENDING').length
   );
   return (
     <Tab.Navigator
