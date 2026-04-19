@@ -93,13 +93,11 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        if (project.hasProperty('SKIPQ_VENDOR_STORE_FILE')) {
-            release {
-                storeFile file(SKIPQ_VENDOR_STORE_FILE)
-                storePassword SKIPQ_VENDOR_STORE_PASSWORD
-                keyAlias SKIPQ_VENDOR_KEY_ALIAS
-                keyPassword SKIPQ_VENDOR_KEY_PASSWORD
-            }
+        release {
+            storeFile file(SKIPQ_VENDOR_STORE_FILE)
+            storePassword SKIPQ_VENDOR_STORE_PASSWORD
+            keyAlias SKIPQ_VENDOR_KEY_ALIAS
+            keyPassword SKIPQ_VENDOR_KEY_PASSWORD
         }
     }
     buildTypes {
@@ -107,7 +105,7 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig project.hasProperty('SKIPQ_VENDOR_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
