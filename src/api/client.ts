@@ -1,11 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const BASE_URL =
-  'https://skipq-core-1014891107344.asia-south1.run.app';
+import Config from 'react-native-config';
 
 export const client = axios.create({
-  baseURL: BASE_URL,
+  baseURL: Config.API_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
