@@ -28,7 +28,7 @@ function applyFilter(orders: Order[], filter: Filter): Order[] {
   const weekStart = todayStart - 6 * 86400000;
 
   return orders.filter(o => {
-    const t = new Date(o.createdAt).getTime();
+    const t = new Date(o.timeline.createdAt).getTime();
     if (filter === 'today') return t >= todayStart;
     if (filter === 'yesterday') return t >= yesterdayStart && t < todayStart;
     if (filter === 'week') return t >= weekStart;
@@ -61,14 +61,14 @@ export default function HistoryScreen({ navigation }: any) {
       onPress={() => navigation.navigate('Orders', { screen: 'OrderDetail', params: { orderId: item.id } })}>
       <View style={styles.cardHeader}>
         <Text style={styles.orderId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
-        <StatusBadge status={item.status} />
+        <StatusBadge status={item.state.orderStatus} />
       </View>
       <Text style={styles.items} numberOfLines={2}>
         {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
       </Text>
       <View style={styles.cardFooter}>
-        <Text style={styles.total}>₹{item.totalAmount.toFixed(2)}</Text>
-        <Text style={styles.date}>{timeAgo(item.createdAt)}</Text>
+        <Text style={styles.total}>₹{item.pricing.totalAmount.toFixed(2)}</Text>
+        <Text style={styles.date}>{timeAgo(item.timeline.createdAt)}</Text>
       </View>
     </TouchableOpacity>
   );

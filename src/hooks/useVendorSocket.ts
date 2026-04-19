@@ -26,7 +26,7 @@ export function useVendorSocket(vendorId: string | undefined) {
     channel.subscribe('order', message => {
       const order: Order = JSON.parse(message.data);
       const isNew = !activeOrdersRef.current.some(o => o.id === order.id);
-      if (isNew && order.status === 'PENDING') {
+      if (isNew && order.state.orderStatus === 'PENDING') {
         Vibration.vibrate(NEW_ORDER_PATTERN);
       }
       upsertOrder(order);

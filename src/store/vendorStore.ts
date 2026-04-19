@@ -37,7 +37,7 @@ export const useVendorStore = create<VendorState>(set => ({
 
   upsertOrder: order =>
     set(state => {
-      const isPast = ['COMPLETED', 'REJECTED'].includes(order.status);
+      const isPast = ['COMPLETED', 'REJECTED'].includes(order.state.orderStatus);
 
       const removeFrom = (list: Order[]) => list.filter(o => o.id !== order.id);
 

@@ -57,7 +57,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
     );
   }
 
-  const actions = STATUS_ACTIONS[order.status];
+  const actions = STATUS_ACTIONS[order.state.orderStatus];
 
   return (
     <View style={styles.container}>
@@ -69,7 +69,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
         <Text style={styles.headerTitle}>
           #{order.id.slice(0, 8).toUpperCase()}
         </Text>
-        <StatusBadge status={order.status} />
+        <StatusBadge status={order.state.orderStatus} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -88,7 +88,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           <View style={styles.itemRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>
-              ₹{order.totalAmount.toFixed(2)}
+              ₹{order.pricing.totalAmount.toFixed(2)}
             </Text>
           </View>
         </View>
@@ -99,7 +99,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Placed at</Text>
             <Text style={styles.infoValue}>
-              {new Date(order.createdAt).toLocaleTimeString('en-IN', {
+              {new Date(order.timeline.createdAt).toLocaleTimeString('en-IN', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -108,7 +108,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Est. ready</Text>
             <Text style={styles.infoValue}>
-              {new Date(order.estimatedReadyAt).toLocaleTimeString('en-IN', {
+              {new Date(order.timeline.estimatedReadyAt).toLocaleTimeString('en-IN', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -116,7 +116,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Payment</Text>
-            <Text style={styles.infoValue}>{order.paymentStatus}</Text>
+            <Text style={styles.infoValue}>{order.state.paymentStatus}</Text>
           </View>
         </View>
       </ScrollView>
