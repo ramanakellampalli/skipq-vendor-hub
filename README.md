@@ -30,6 +30,7 @@ This is the **vendor-facing Android app**.
 | 🔓 **Store control** | Toggle open/closed, set default prep time |
 | 📋 **Order history** | All past completed and rejected orders |
 | 🏫 **Campus-linked** | Your stall is scoped to your campus — only your students see you |
+| 🗑️ **Account deletion** | Permanently delete vendor account, menu, and all data from Profile screen |
 
 ---
 
@@ -149,3 +150,11 @@ src/
 | `API_URL` | Backend base URL |
 
 Managed via `react-native-config`. Set in `.env` — injected at build time.
+
+---
+
+## Account Deletion
+
+Vendors can permanently delete their account from **Profile → Delete Account**. This removes the store profile, all menu items, all order history, and login credentials immediately.
+
+Web deletion page (required for Google Play Console): `https://ohyeahsaas.com/privacy/skipq-vendor/delete-account`
