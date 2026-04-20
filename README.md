@@ -147,5 +147,48 @@ src/
 | Variable | Description |
 |----------|-------------|
 | `API_URL` | Backend base URL |
+| `ABLY_API_KEY` | Ably API key for real-time order push |
 
 Managed via `react-native-config`. Set in `.env` — injected at build time.
+
+---
+
+## Building for Release (Play Store)
+
+### Prerequisites
+
+- JDK 17
+- Android SDK
+- Release keystore at `~/skipq-keystores/skipq-vendor-release.keystore`
+- `android/gradle.properties` with signing config (not committed — add locally):
+
+```properties
+SKIPQ_VENDOR_STORE_FILE=/Users/<you>/skipq-keystores/skipq-vendor-release.keystore
+SKIPQ_VENDOR_KEY_ALIAS=skipq-vendor
+SKIPQ_VENDOR_STORE_PASSWORD=<password>
+SKIPQ_VENDOR_KEY_PASSWORD=<password>
+```
+
+### Build release AAB
+
+```bash
+cd android
+./gradlew bundleRelease --no-daemon
+```
+
+Output: `android/app/build/outputs/bundle/release/app-release.aab`
+
+Upload this file to Google Play Console → Internal Testing → Production.
+
+### macOS Gatekeeper issue
+
+If the build fails with `AAPT2 Daemon startup failed`, run:
+
+```bash
+sudo xattr -dr com.apple.quarantine ~/.gradle/caches/9.3.1/transforms/
+```
+
+Then retry the build.
+
+### Package name
+`com.skipqvendorhub`
