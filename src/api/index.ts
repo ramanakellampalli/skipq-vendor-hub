@@ -33,6 +33,8 @@ export const api = {
       client.get<VendorProfile>('/api/v1/vendor/profile'),
     updateProfile: (data: Partial<VendorProfile>) =>
       client.patch<VendorProfile>('/api/v1/vendor/profile', data),
+    deleteAccount: () =>
+      client.delete('/api/v1/vendor/account'),
   },
 
   orders: {
