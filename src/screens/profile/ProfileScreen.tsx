@@ -8,9 +8,10 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
-import { LogOut } from 'lucide-react-native';
+import { LogOut, Trash2 } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
@@ -24,6 +25,7 @@ export default function ProfileScreen() {
 
   const [prepTime, setPrepTime] = useState('');
   const [editingPrepTime, setEditingPrepTime] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (profile?.prepTime != null) {
@@ -44,6 +46,31 @@ export default function ProfileScreen() {
     }
     updateProfile.mutate({ prepTime: val });
     setEditingPrepTime(false);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your vendor account, menu, and all order history. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await api.vendor.deleteAccount();
+              await logout();
+            } catch {
+              Alert.alert('Error', 'Failed to delete account. Please try again.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleLogout = async () => {
@@ -187,6 +214,11 @@ export default function ProfileScreen() {
         <LogOut size={18} color={colors.error} />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} disabled={isDeleting}>
+        <Trash2 size={16} color={colors.textSecondary} />
+        <Text style={styles.deleteText}>{isDeleting ? 'Deleting…' : 'Delete Account'}</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -265,6 +297,16 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: colors.error },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    margin: spacing.md,
+    marginTop: 0,
+    padding: spacing.md,
+  },
+  deleteText: { fontSize: 13, color: colors.textSecondary },
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
