@@ -1,11 +1,12 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, VendorProfile } from '../types';
+import { Order, OrderStatus, MenuItem, MenuCategory, MenuVariant, VendorProfile } from '../types';
 
 export interface SyncResponse {
   profile: VendorProfile;
   activeOrders: Order[];
   pastOrders: Order[];
-  menuItems: MenuItem[];
+  categories: MenuCategory[];
+  uncategorized: MenuItem[];
 }
 
 export const api = {
@@ -47,11 +48,31 @@ export const api = {
   menu: {
     getAll: () =>
       client.get<MenuItem[]>('/api/v1/vendor/menu'),
-    create: (data: { name: string; price: number; isAvailable: boolean }) =>
+    create: (data: { name: string; description?: string; isVeg: boolean; categoryId?: string; displayOrder?: number }) =>
       client.post<MenuItem>('/api/v1/vendor/menu', data),
-    update: (id: string, data: Partial<MenuItem>) =>
+    update: (id: string, data: { name?: string; description?: string; isVeg?: boolean; isAvailable?: boolean; categoryId?: string; displayOrder?: number }) =>
       client.patch<MenuItem>(`/api/v1/vendor/menu/${id}`, data),
     delete: (id: string) =>
       client.delete(`/api/v1/vendor/menu/${id}`),
+  },
+
+  categories: {
+    getAll: () =>
+      client.get<MenuCategory[]>('/api/v1/vendor/menu/categories'),
+    create: (data: { name: string; displayOrder?: number }) =>
+      client.post<MenuCategory>('/api/v1/vendor/menu/categories', data),
+    update: (id: string, data: { name?: string; displayOrder?: number }) =>
+      client.patch<MenuCategory>(`/api/v1/vendor/menu/categories/${id}`, data),
+    delete: (id: string) =>
+      client.delete(`/api/v1/vendor/menu/categories/${id}`),
+  },
+
+  variants: {
+    add: (itemId: string, data: { label?: string; price: number; isAvailable?: boolean; displayOrder?: number }) =>
+      client.post<MenuVariant>(`/api/v1/vendor/menu/${itemId}/variants`, data),
+    update: (itemId: string, variantId: string, data: { label?: string; price?: number; isAvailable?: boolean; displayOrder?: number }) =>
+      client.patch<MenuVariant>(`/api/v1/vendor/menu/${itemId}/variants/${variantId}`, data),
+    delete: (itemId: string, variantId: string) =>
+      client.delete(`/api/v1/vendor/menu/${itemId}/variants/${variantId}`),
   },
 };
