@@ -23,7 +23,7 @@ function AppContent() {
       reset();
       return;
     }
-    api.vendor.sync().then(res => setSync(res.data)).catch(() => setSync({ profile: null as any, activeOrders: [], pastOrders: [], menuItems: [] }));
+    api.vendor.sync().then(res => setSync(res.data)).catch(() => setSync({ profile: null as any, activeOrders: [], pastOrders: [], categories: [], uncategorized: [] }));
   }, [token]);
 
   return <Navigation />;
