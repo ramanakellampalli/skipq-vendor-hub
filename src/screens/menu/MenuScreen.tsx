@@ -424,6 +424,60 @@ function CategorySection({
   );
 }
 
+// ─── Uncategorized section ────────────────────────────────────────────────────
+
+interface UncategorizedSectionProps {
+  items: MenuItem[];
+  onEditItem: (item: MenuItem) => void;
+  onDeleteItem: (item: MenuItem) => void;
+  onAddVariant: (item: MenuItem) => void;
+  onEditVariant: (item: MenuItem, v: MenuVariant) => void;
+  onDeleteVariant: (item: MenuItem, v: MenuVariant) => void;
+  onToggleItemAvailable: (item: MenuItem, val: boolean) => void;
+  onToggleVariantAvailable: (item: MenuItem, v: MenuVariant, val: boolean) => void;
+}
+
+function UncategorizedSection({
+  items,
+  onEditItem,
+  onDeleteItem,
+  onAddVariant,
+  onEditVariant,
+  onDeleteVariant,
+  onToggleItemAvailable,
+  onToggleVariantAvailable,
+}: UncategorizedSectionProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <View style={styles.section}>
+      <TouchableOpacity style={styles.sectionHeader} onPress={() => setCollapsed(v => !v)}>
+        <View style={styles.sectionHeaderLeft}>
+          {collapsed
+            ? <ChevronRight size={16} color={colors.textSecondary} />
+            : <ChevronDown size={16} color={colors.textSecondary} />}
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Uncategorized</Text>
+          <Text style={styles.sectionCount}>{items.length}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {!collapsed && items.map(item => (
+        <ItemCard
+          key={item.id}
+          item={item}
+          onEdit={() => onEditItem(item)}
+          onDelete={() => onDeleteItem(item)}
+          onAddVariant={() => onAddVariant(item)}
+          onEditVariant={v => onEditVariant(item, v)}
+          onDeleteVariant={v => onDeleteVariant(item, v)}
+          onToggleAvailable={val => onToggleItemAvailable(item, val)}
+          onToggleVariantAvailable={(v, val) => onToggleVariantAvailable(item, v, val)}
+        />
+      ))}
+    </View>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function MenuScreen() {
@@ -522,27 +576,16 @@ export default function MenuScreen() {
         ))}
 
         {uncategorized.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionHeaderLeft}>
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Uncategorized</Text>
-                <Text style={styles.sectionCount}>{uncategorized.length}</Text>
-              </View>
-            </View>
-            {uncategorized.map(item => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                onEdit={() => setItemModal({ visible: true, editing: item })}
-                onDelete={() => confirmDeleteItem(item)}
-                onAddVariant={() => setVariantModal({ visible: true, itemId: item.id, editing: null })}
-                onEditVariant={v => setVariantModal({ visible: true, itemId: item.id, editing: v })}
-                onDeleteVariant={v => confirmDeleteVariant(item, v)}
-                onToggleAvailable={val => updateItemAvailability.mutate({ id: item.id, val })}
-                onToggleVariantAvailable={(v, val) => updateVariantAvailability.mutate({ itemId: item.id, variantId: v.id, val })}
-              />
-            ))}
-          </View>
+          <UncategorizedSection
+            items={uncategorized}
+            onEditItem={item => setItemModal({ visible: true, editing: item })}
+            onDeleteItem={confirmDeleteItem}
+            onAddVariant={item => setVariantModal({ visible: true, itemId: item.id, editing: null })}
+            onEditVariant={(item, v) => setVariantModal({ visible: true, itemId: item.id, editing: v })}
+            onDeleteVariant={confirmDeleteVariant}
+            onToggleItemAvailable={(item, val) => updateItemAvailability.mutate({ id: item.id, val })}
+            onToggleVariantAvailable={(item, v, val) => updateVariantAvailability.mutate({ itemId: item.id, variantId: v.id, val })}
+          />
         )}
 
         {totalItems === 0 && (
