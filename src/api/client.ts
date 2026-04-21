@@ -10,9 +10,8 @@ export const client = axios.create({
 
 client.interceptors.request.use(async config => {
   const token = await AsyncStorage.getItem('jwt');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (config.url?.includes('/auth/setup-password')) config.timeout = 30000;
   return config;
 });
 
@@ -30,4 +29,3 @@ client.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
