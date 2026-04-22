@@ -5,15 +5,25 @@ const rnBiometrics = new ReactNativeBiometrics({ allowDeviceCredentials: false }
 const KEYCHAIN_SERVICE = 'com.skipqvendorhub.biometrics';
 
 export async function isBiometricAvailable(): Promise<boolean> {
-  const { available } = await rnBiometrics.isSensorAvailable();
-  return available;
+  try {
+    const { available } = await rnBiometrics.isSensorAvailable();
+    return available;
+  } catch (error) {
+    console.error('isBiometricAvailable failed:', error);
+    return false;
+  }
 }
 
 export async function getBiometricLabel(): Promise<string> {
-  const { biometryType } = await rnBiometrics.isSensorAvailable();
-  if (biometryType === BiometryTypes.FaceID) return 'Face ID';
-  if (biometryType === BiometryTypes.TouchID) return 'Touch ID';
-  return 'Fingerprint';
+  try {
+    const { biometryType } = await rnBiometrics.isSensorAvailable();
+    if (biometryType === BiometryTypes.FaceID) return 'Face ID';
+    if (biometryType === BiometryTypes.TouchID) return 'Touch ID';
+    return 'Fingerprint';
+  } catch (error) {
+    console.error('getBiometricLabel failed:', error);
+    return 'Biometrics';
+  }
 }
 
 export async function promptBiometric(promptMessage: string): Promise<boolean> {
