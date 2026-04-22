@@ -74,18 +74,21 @@ export default function LoginScreen({ navigation }: any) {
 
     const available = await isBiometricAvailable();
     if (available) {
-      const label = await getBiometricLabel();
-      Alert.alert(
-        'Enable Biometric Login',
-        `Would you like to sign in with ${label} next time?`,
-        [
-          { text: 'Not Now', style: 'cancel' },
-          {
-            text: 'Enable',
-            onPress: () => saveCredentials(email.trim(), password),
-          },
-        ],
-      );
+      const hasCreds = await hasSavedCredentials();
+      if (!hasCreds) {
+        const label = await getBiometricLabel();
+        Alert.alert(
+          'Enable Biometric Login',
+          `Would you like to sign in with ${label} next time?`,
+          [
+            { text: 'Not Now', style: 'cancel' },
+            {
+              text: 'Enable',
+              onPress: () => saveCredentials(email.trim(), password),
+            },
+          ],
+        );
+      }
     }
   };
 
