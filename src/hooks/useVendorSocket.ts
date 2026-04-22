@@ -20,6 +20,7 @@ export function useVendorSocket(vendorId: string | undefined) {
   useEffect(() => {
     if (!vendorId) return;
 
+    if (!Config.ABLY_API_KEY) return;
     const client = new Ably.Realtime({ key: Config.ABLY_API_KEY, closeOnUnload: false });
     const channel = client.channels.get(`vendor:${vendorId}`);
 

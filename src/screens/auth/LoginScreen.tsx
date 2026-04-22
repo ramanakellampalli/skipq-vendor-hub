@@ -49,16 +49,16 @@ export default function LoginScreen({ navigation }: any) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const doLogin = async (loginEmail: string, loginPassword: string) => {
+  const doLogin = async (loginEmail: string, loginPassword: string): Promise<boolean> => {
     try {
       setLoading(true);
       const { data } = await api.auth.login(loginEmail.trim(), loginPassword);
       await setAuth(data.token, data.userId, data.name, data.email);
+      return true;
     } catch (err: any) {
-      Alert.alert(
-        'Login Failed',
-        err.response?.data?.message || 'Invalid email or password',
-      );
+      const msg = err.response?.data?.message || err.message || 'Network error';
+      Alert.alert('Login Failed', msg);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,8 @@ export default function LoginScreen({ navigation }: any) {
       Alert.alert('Error', 'Please enter your email and password');
       return;
     }
-    await doLogin(email, password);
+    const success = await doLogin(email, password);
+    if (!success) return;
 
     const available = await isBiometricAvailable();
     if (available) {
