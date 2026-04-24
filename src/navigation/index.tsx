@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Linking } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { AppState, AppStateStatus, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -110,10 +110,22 @@ export default function Navigation() {
   const { token, isLoading } = useAuthStore();
   const setSync = useVendorStore(state => state.setSync);
   const vendorId = useVendorStore(state => state.profile?.id);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     if (!token) return;
     api.vendor.sync().then(res => setSync(res.data)).catch(() => {});
+  }, [token, setSync]);
+
+  useEffect(() => {
+    if (!token) return;
+    const sub = AppState.addEventListener('change', next => {
+      if (appState.current.match(/inactive|background/) && next === 'active') {
+        api.vendor.sync().then(res => setSync(res.data)).catch(() => {});
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
   }, [token, setSync]);
 
   useVendorSocket(token ? vendorId : undefined);
