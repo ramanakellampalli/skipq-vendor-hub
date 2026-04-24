@@ -5,11 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from 'react-native';
+import PasswordInput from '../../components/PasswordInput';
+import LoadingDots from '../../components/LoadingDots';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import {
@@ -131,25 +132,17 @@ export default function LoginScreen({ navigation }: any) {
           />
 
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry
-            autoCapitalize="none"
           />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Login</Text>
-            )}
+            {loading ? <LoadingDots /> : <Text style={styles.buttonText}>Login</Text>}
           </TouchableOpacity>
 
           {biometricLabel && !loading && (
