@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Vibration } from 'react-native';
+import { AppState, AppStateStatus, Vibration } from 'react-native';
 import Ably from 'ably';
 import Config from 'react-native-config';
 import { useVendorStore } from '../store/vendorStore';
 import { Order } from '../types';
+
 const NEW_ORDER_PATTERN = [0, 300, 150, 300];
 
 export function useVendorSocket(vendorId: string | undefined) {
@@ -18,10 +19,14 @@ export function useVendorSocket(vendorId: string | undefined) {
   }, []);
 
   useEffect(() => {
-    if (!vendorId) return;
+    if (!vendorId || !Config.ABLY_API_KEY) return;
 
-    if (!Config.ABLY_API_KEY) return;
-    const client = new Ably.Realtime({ key: Config.ABLY_API_KEY, closeOnUnload: false });
+    const client = new Ably.Realtime({
+      key: Config.ABLY_API_KEY,
+      closeOnUnload: false,
+      recover: (_details, cb) => cb(true),
+    });
+
     const channel = client.channels.get(`vendor:${vendorId}`);
 
     channel.subscribe('order', message => {
@@ -35,7 +40,16 @@ export function useVendorSocket(vendorId: string | undefined) {
 
     clientRef.current = client;
 
+    // Nudge Ably to reconnect immediately when app returns to foreground
+    // instead of waiting for its backoff timer
+    const appStateSub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next === 'active') {
+        clientRef.current?.connect();
+      }
+    });
+
     return () => {
+      appStateSub.remove();
       channel.unsubscribe();
       client.close();
       clientRef.current = null;
