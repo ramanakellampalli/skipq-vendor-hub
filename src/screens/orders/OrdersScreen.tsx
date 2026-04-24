@@ -18,7 +18,6 @@ import { colors, radius, spacing } from '../../theme';
 import { Order, OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import { useVendorStore } from '../../store/vendorStore';
-import { useVendorSocket } from '../../hooks/useVendorSocket';
 import { timeAgo } from '../../utils/time';
 
 const CARD_ACTIONS: Partial<Record<OrderStatus, { next?: OrderStatus; reject?: boolean; label?: string }>> = {
@@ -53,8 +52,6 @@ export default function OrdersScreen({ navigation }: any) {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
-
-  useVendorSocket(profile?.id);
 
   const toggleOpen = useMutation({
     mutationFn: (isOpen: boolean) => api.vendor.updateProfile({ isOpen }),

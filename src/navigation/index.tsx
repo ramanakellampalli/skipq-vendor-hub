@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '../store/authStore';
 import { useVendorStore } from '../store/vendorStore';
+import { useVendorSocket } from '../hooks/useVendorSocket';
 import { api } from '../api';
 import { colors } from '../theme';
 
@@ -108,11 +109,14 @@ const linking = {
 export default function Navigation() {
   const { token, isLoading } = useAuthStore();
   const setSync = useVendorStore(state => state.setSync);
+  const vendorId = useVendorStore(state => state.profile?.id);
 
   useEffect(() => {
     if (!token) return;
     api.vendor.sync().then(res => setSync(res.data)).catch(() => {});
   }, [token, setSync]);
+
+  useVendorSocket(token ? vendorId : undefined);
 
   if (isLoading) return null;
 
