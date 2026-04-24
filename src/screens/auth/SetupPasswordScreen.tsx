@@ -5,13 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert,
   Linking,
   ScrollView,
 } from 'react-native';
+import PasswordInput from '../../components/PasswordInput';
+import LoadingDots from '../../components/LoadingDots';
 import { colors, radius, spacing } from '../../theme';
 
 export default function SetupPasswordScreen({ route, navigation }: any) {
@@ -80,36 +81,24 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
           />
 
           <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={password}
             onChangeText={setPassword}
             placeholder="Minimum 8 characters"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry
-            autoCapitalize="none"
           />
 
           <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={confirm}
             onChangeText={setConfirm}
             placeholder="Re-enter your password"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry
-            autoCapitalize="none"
           />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleNext}
             disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Next →</Text>
-            )}
+            {loading ? <LoadingDots /> : <Text style={styles.buttonText}>Next →</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
