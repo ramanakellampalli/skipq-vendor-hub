@@ -1,13 +1,6 @@
 import { useEffect } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
-import {
-  getMessaging,
-  getToken,
-  requestPermission,
-  onTokenRefresh,
-  hasPermission,
-  AuthorizationStatus,
-} from '@react-native-firebase/messaging';
+import messaging from '@react-native-firebase/messaging';
 import { api } from '../api';
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -17,14 +10,14 @@ export async function requestNotificationPermission(): Promise<boolean> {
     );
   }
 
-  const status = await requestPermission(getMessaging());
+  const status = await messaging().requestPermission();
   const granted =
-    status === AuthorizationStatus.AUTHORIZED ||
-    status === AuthorizationStatus.PROVISIONAL;
+    status === messaging.AuthorizationStatus.AUTHORIZED ||
+    status === messaging.AuthorizationStatus.PROVISIONAL;
 
   if (!granted) return false;
 
-  const token = await getToken(getMessaging());
+  const token = await messaging().getToken();
   if (token) {
     await api.vendor.registerDeviceToken(token).catch(() => {});
   }
@@ -32,7 +25,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function getNotificationStatus(): Promise<number> {
-  return hasPermission(getMessaging());
+  return messaging().hasPermission();
 }
 
 export function usePushNotifications(enabled: boolean) {
@@ -41,7 +34,7 @@ export function usePushNotifications(enabled: boolean) {
 
     requestNotificationPermission();
 
-    const unsubscribe = onTokenRefresh(getMessaging(), token => {
+    const unsubscribe = messaging().onTokenRefresh(token => {
       api.vendor.registerDeviceToken(token).catch(() => {});
     });
 
