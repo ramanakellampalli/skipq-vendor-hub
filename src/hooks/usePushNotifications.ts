@@ -2,10 +2,13 @@ import { useEffect } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 import {
   getMessaging,
+  getToken,
   requestPermission,
+  onTokenRefresh,
   hasPermission,
   AuthorizationStatus,
 } from '@react-native-firebase/messaging';
+import { api } from '../api';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
@@ -15,10 +18,17 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 
   const status = await requestPermission(getMessaging());
-  return (
+  const granted =
     status === AuthorizationStatus.AUTHORIZED ||
-    status === AuthorizationStatus.PROVISIONAL
-  );
+    status === AuthorizationStatus.PROVISIONAL;
+
+  if (!granted) return false;
+
+  const token = await getToken(getMessaging());
+  if (token) {
+    await api.vendor.registerDeviceToken(token).catch(() => {});
+  }
+  return true;
 }
 
 export async function getNotificationStatus(): Promise<number> {
@@ -28,6 +38,13 @@ export async function getNotificationStatus(): Promise<number> {
 export function usePushNotifications(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
+
     requestNotificationPermission();
+
+    const unsubscribe = onTokenRefresh(getMessaging(), token => {
+      api.vendor.registerDeviceToken(token).catch(() => {});
+    });
+
+    return unsubscribe;
   }, [enabled]);
 }
