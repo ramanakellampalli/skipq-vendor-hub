@@ -79,4 +79,7 @@ yarn-error.log
 .env.*
 !.env.example
 android/gradle.properties
+
+# Firebase config — contains API keys, never commit
 android/app/google-services.json
+ios/GoogleService-Info.plist
