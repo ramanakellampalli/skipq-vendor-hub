@@ -36,6 +36,8 @@ export const api = {
       client.patch<VendorProfile>('/api/v1/vendor/profile', data),
     deleteAccount: () =>
       client.delete('/api/v1/vendor/account'),
+    registerDeviceToken: (token: string) =>
+      client.put('/api/v1/shared/device-token', { token }),
   },
 
   orders: {
