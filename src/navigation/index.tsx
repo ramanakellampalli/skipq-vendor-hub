@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
 import { useVendorStore } from '../store/vendorStore';
 import { useVendorSocket } from '../hooks/useVendorSocket';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { api } from '../api';
 import { colors } from '../theme';
 
@@ -116,6 +117,7 @@ export default function Navigation() {
   }, [token, setSync]);
 
   useVendorSocket(token ? vendorId : undefined);
+  usePushNotifications(!!token);
 
   if (isLoading) return null;
 

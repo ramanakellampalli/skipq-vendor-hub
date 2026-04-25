@@ -9,13 +9,16 @@ import {
   Alert,
   ScrollView,
   StatusBar,
+  Linking,
 } from 'react-native';
+import { AuthorizationStatus } from '@react-native-firebase/messaging';
 import { useMutation } from '@tanstack/react-query';
-import { LogOut, Trash2 } from 'lucide-react-native';
+import { LogOut, Trash2, Bell, BellOff } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
 import { hasSavedCredentials } from '../../utils/biometrics';
+import { requestNotificationPermission, getNotificationStatus } from '../../hooks/usePushNotifications';
 import { colors, radius, spacing } from '../../theme';
 
 export default function ProfileScreen() {
@@ -26,6 +29,11 @@ export default function ProfileScreen() {
   const [prepTime, setPrepTime] = useState('');
   const [editingPrepTime, setEditingPrepTime] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [notifStatus, setNotifStatus] = useState<number>(AuthorizationStatus.NOT_DETERMINED);
+
+  useEffect(() => {
+    getNotificationStatus().then(setNotifStatus);
+  }, []);
 
   useEffect(() => {
     if (profile?.prepTime != null) {
@@ -71,6 +79,20 @@ export default function ProfileScreen() {
         },
       ],
     );
+  };
+
+  const handleEnableNotifications = async () => {
+    if (notifStatus === AuthorizationStatus.AUTHORIZED) return;
+    if (notifStatus === AuthorizationStatus.DENIED) {
+      Linking.openSettings();
+      return;
+    }
+    const granted = await requestNotificationPermission();
+    const status = await getNotificationStatus();
+    setNotifStatus(status);
+    if (!granted) {
+      Alert.alert('Notifications blocked', 'Please enable notifications in your device settings.');
+    }
   };
 
   const handleLogout = async () => {
@@ -163,6 +185,25 @@ export default function ProfileScreen() {
           <Text style={styles.rowLabel}>Email</Text>
           <Text style={styles.rowValue}>{email}</Text>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Notifications</Text>
+        <TouchableOpacity style={styles.row} onPress={handleEnableNotifications} activeOpacity={0.7}>
+          <View style={styles.notifLeft}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? <Bell size={16} color={colors.primary} />
+              : <BellOff size={16} color={colors.textSecondary} />}
+            <Text style={styles.rowLabel}>Order Alerts</Text>
+          </View>
+          <Text style={styles.rowValue}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? 'Enabled'
+              : notifStatus === AuthorizationStatus.DENIED
+                ? 'Blocked — tap to open settings'
+                : 'Tap to enable'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -317,6 +358,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 13, fontWeight: '700' },
   badgeSuccessText: { color: colors.success },
   badgePendingText: { color: '#f57c00' },
+  notifLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   kycNote: {
     fontSize: 13,
     color: colors.textSecondary,
