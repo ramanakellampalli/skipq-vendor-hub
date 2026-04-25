@@ -25,7 +25,7 @@ export interface Order {
   pricing: {
     subtotal: number;
     tax: { cgst: number; sgst: number; igst: number; totalTax: number };
-    fees: { platformFee: number; paymentTerminalFee: number; totalServiceFee: number };
+    fees: { platformFee: number; totalServiceFee: number };
     totalAmount: number;
   };
   timeline: { createdAt: string; estimatedReadyAt: string };
@@ -55,6 +55,18 @@ export interface MenuCategory {
   name: string;
   displayOrder: number;
   items: MenuItem[];
+}
+
+export interface MonthlySummary {
+  year: number;
+  month: number;
+  orderCount: number;
+  grossRevenue: number;
+  cgst: number;
+  sgst: number;
+  totalTax: number;
+  platformFees: number;
+  netPayout: number;
 }
 
 export interface VendorProfile {

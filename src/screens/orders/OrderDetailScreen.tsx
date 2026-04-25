@@ -14,6 +14,7 @@ import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+import DownloadInvoiceButton from '../../components/DownloadInvoiceButton';
 import { useVendorStore } from '../../store/vendorStore';
 
 const STATUS_ACTIONS: Record<OrderStatus, { next?: OrderStatus; reject?: boolean }> = {
@@ -39,6 +40,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
   const order = useVendorStore(state =>
     [...state.activeOrders, ...state.pastOrders].find(o => o.id === orderId)
   );
+  const profile = useVendorStore(state => state.profile);
 
   const updateStatus = useMutation({
     mutationFn: (status: OrderStatus) =>
@@ -120,6 +122,13 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           </View>
         </View>
       </ScrollView>
+
+      {/* Invoice download — completed orders for GST-registered vendors only */}
+      {order.state.orderStatus === 'COMPLETED' && profile?.gstRegistered && (
+        <View style={styles.invoiceRow}>
+          <DownloadInvoiceButton order={order} profile={profile} />
+        </View>
+      )}
 
       {/* Action Buttons */}
       {(actions.next || actions.reject) && (
@@ -220,4 +229,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rejectText: { color: colors.error, fontSize: 16, fontWeight: '700' },
+  invoiceRow: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
 });
