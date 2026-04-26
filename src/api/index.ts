@@ -1,5 +1,5 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, MenuCategory, MenuVariant, VendorProfile } from '../types';
+import { Order, OrderStatus, MenuItem, MenuCategory, MenuVariant, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
 
 export interface SyncResponse {
   profile: VendorProfile;
@@ -7,6 +7,7 @@ export interface SyncResponse {
   pastOrders: Order[];
   categories: MenuCategory[];
   uncategorized: MenuItem[];
+  serviceRequests: ServiceRequest[];
 }
 
 export const api = {
@@ -38,6 +39,11 @@ export const api = {
       client.delete('/api/v1/vendor/account'),
     registerDeviceToken: (token: string) =>
       client.put('/api/v1/shared/device-token', { token }),
+  },
+
+  support: {
+    create: (data: { type: ServiceRequestType; description: string }) =>
+      client.post<ServiceRequest>('/api/v1/support', data),
   },
 
   orders: {

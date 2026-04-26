@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Order, MenuItem, MenuCategory, MenuVariant, VendorProfile } from '../types';
+import { Order, MenuItem, MenuCategory, MenuVariant, VendorProfile, ServiceRequest } from '../types';
 
 interface VendorState {
   profile: VendorProfile | null;
@@ -7,6 +7,7 @@ interface VendorState {
   pastOrders: Order[];
   categories: MenuCategory[];
   uncategorized: MenuItem[];
+  serviceRequests: ServiceRequest[];
   isSynced: boolean;
 
   setSync: (data: {
@@ -15,7 +16,10 @@ interface VendorState {
     pastOrders: Order[];
     categories: MenuCategory[];
     uncategorized: MenuItem[];
+    serviceRequests: ServiceRequest[];
   }) => void;
+
+  addServiceRequest: (sr: ServiceRequest) => void;
 
   setProfile: (profile: VendorProfile) => void;
   upsertOrder: (order: Order) => void;
@@ -43,10 +47,14 @@ export const useVendorStore = create<VendorState>(set => ({
   pastOrders: [],
   categories: [],
   uncategorized: [],
+  serviceRequests: [],
   isSynced: false,
 
-  setSync: ({ profile, activeOrders, pastOrders, categories, uncategorized }) =>
-    set({ profile: profile ?? null, activeOrders, pastOrders, categories, uncategorized, isSynced: true }),
+  setSync: ({ profile, activeOrders, pastOrders, categories, uncategorized, serviceRequests }) =>
+    set({ profile: profile ?? null, activeOrders, pastOrders, categories, uncategorized, serviceRequests: serviceRequests ?? [], isSynced: true }),
+
+  addServiceRequest: (sr) =>
+    set(state => ({ serviceRequests: [sr, ...state.serviceRequests] })),
 
   setProfile: profile => set({ profile }),
 
@@ -143,5 +151,5 @@ export const useVendorStore = create<VendorState>(set => ({
     }),
 
   reset: () =>
-    set({ profile: null, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], isSynced: false }),
+    set({ profile: null, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [], isSynced: false }),
 }));

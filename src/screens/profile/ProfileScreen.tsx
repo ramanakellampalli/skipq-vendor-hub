@@ -10,9 +10,10 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { AuthorizationStatus } from '@react-native-firebase/messaging';
 import { useMutation } from '@tanstack/react-query';
-import { LogOut, Trash2, Bell, BellOff } from 'lucide-react-native';
+import { LogOut, Trash2, Bell, BellOff, ChevronRight } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
@@ -21,6 +22,7 @@ import { requestNotificationPermission, getNotificationStatus } from '../../hook
 import { colors, radius, spacing } from '../../theme';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
   const { logout, name, email } = useAuthStore();
   const profile = useVendorStore(state => state.profile);
   const setProfile = useVendorStore(state => state.setProfile);
@@ -248,6 +250,14 @@ export default function ProfileScreen() {
             </View>
           </>
         )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Help</Text>
+        <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Support')} activeOpacity={0.7}>
+          <Text style={styles.rowLabel}>Contact Support</Text>
+          <ChevronRight size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
