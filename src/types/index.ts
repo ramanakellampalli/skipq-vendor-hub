@@ -67,6 +67,22 @@ export interface MonthlySummary {
   totalTax: number;
 }
 
+export type ServiceRequestType =
+  | 'REFUND_ISSUE' | 'PAYMENT_ISSUE' | 'ACCOUNT_ISSUE'
+  | 'BILLING_ISSUE' | 'PAYOUT_ISSUE' | 'TECHNICAL' | 'OTHER';
+
+export type ServiceRequestStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+
+export interface ServiceRequest {
+  id: string;
+  type: ServiceRequestType;
+  subject: string;
+  status: ServiceRequestStatus;
+  adminResponse: string | null;
+  adminRespondedAt: string | null;
+  createdAt: string;
+}
+
 export interface VendorProfile {
   id: string;
   name: string;

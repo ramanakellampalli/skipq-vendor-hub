@@ -20,6 +20,8 @@ import OrdersScreen from '../screens/orders/OrdersScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import MenuScreen from '../screens/menu/MenuScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import SupportScreen from '../screens/profile/SupportScreen';
+import NewSupportRequestScreen from '../screens/profile/NewSupportRequestScreen';
 import HistoryScreen from '../screens/history/HistoryScreen';
 import EarningsScreen from '../screens/history/EarningsScreen';
 
@@ -27,6 +29,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
 const HistoryStack = createStackNavigator();
+const ProfileStack = createStackNavigator();
 
 function AuthNavigator() {
   return (
@@ -53,6 +56,16 @@ function HistoryNavigator() {
       <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
       <HistoryStack.Screen name="Earnings" component={EarningsScreen} />
     </HistoryStack.Navigator>
+  );
+}
+
+function ProfileNavigator() {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStack.Screen name="Support" component={SupportScreen} />
+      <ProfileStack.Screen name="NewSupportRequest" component={NewSupportRequestScreen} />
+    </ProfileStack.Navigator>
   );
 }
 
@@ -92,7 +105,7 @@ function MainNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileNavigator}
         options={{ tabBarIcon: ({ color }) => <Store size={22} color={color} /> }}
       />
     </Tab.Navigator>
