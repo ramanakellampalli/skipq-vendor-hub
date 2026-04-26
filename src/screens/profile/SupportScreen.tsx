@@ -9,8 +9,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
 import { useVendorStore } from '../../store/vendorStore';
-import { ServiceRequest, ServiceRequestStatus } from '../../types';
+import { ServiceRequest, ServiceRequestStatus, ServiceRequestType } from '../../types';
 import { colors, radius, spacing } from '../../theme';
+
+const TYPE_LABELS: Record<ServiceRequestType, string> = {
+  PAYMENT_ISSUE: 'Payment Issue',
+  PAYOUT_ISSUE:  'Payout Issue',
+  BILLING_ISSUE: 'Billing Issue',
+  ACCOUNT_ISSUE: 'Account Issue',
+  TECHNICAL:     'Technical',
+  OTHER:         'Other',
+};
 
 const STATUS_COLORS: Record<ServiceRequestStatus, { bg: string; text: string }> = {
   OPEN:        { bg: '#FFF3E0', text: '#E65100' },
@@ -35,7 +44,7 @@ function RequestCard({ sr }: { sr: ServiceRequest }) {
   return (
     <View style={styles.card}>
       <View style={styles.cardTop}>
-        <Text style={styles.subject} numberOfLines={1}>{sr.subject}</Text>
+        <Text style={styles.subject} numberOfLines={1}>{TYPE_LABELS[sr.type] ?? sr.type}</Text>
         <View style={[styles.badge, { backgroundColor: bg }]}>
           <Text style={[styles.badgeText, { color: text }]}>{STATUS_LABELS[sr.status]}</Text>
         </View>
