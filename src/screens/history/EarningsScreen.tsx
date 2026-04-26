@@ -1,46 +1,98 @@
 import React, { useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput,
+  View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
-import { ArrowLeft, Download } from 'lucide-react-native';
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, AlertCircle } from 'lucide-react-native';
 import { useVendorStore } from '../../store/vendorStore';
 import { colors, radius, spacing } from '../../theme';
 import { computeMonthlySummary, buildMonthlySummaryHtml } from '../../utils/invoiceHtml';
 import { generateAndSharePdf } from '../../utils/pdfExport';
-import SummaryCard from '../../components/SummaryCard';
 
-const now = new Date();
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+function fmt(n: number): string {
+  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <View style={styles.row}>
+      <Text style={[styles.rowLabel, bold && styles.rowLabelBold]}>{label}</Text>
+      <Text style={[styles.rowValue, bold && styles.rowValueBold]}>{value}</Text>
+    </View>
+  );
+}
+
+function Divider() {
+  return <View style={styles.divider} />;
+}
 
 export default function EarningsScreen({ navigation }: any) {
   const pastOrders = useVendorStore(state => state.pastOrders);
   const profile = useVendorStore(state => state.profile);
-  const [month, setMonth] = useState(String(now.getMonth() + 1));
-  const [year, setYear] = useState(String(now.getFullYear()));
+
+  const now = new Date();
+
+  const earliestOrder = useMemo(() => {
+    const completed = pastOrders.filter(o => o.state.orderStatus === 'COMPLETED');
+    if (completed.length === 0) return null;
+    return completed.reduce((min, o) =>
+      o.timeline.createdAt < min ? o.timeline.createdAt : min,
+      completed[0].timeline.createdAt,
+    );
+  }, [pastOrders]);
+
+  const minYear = earliestOrder ? new Date(earliestOrder).getFullYear() : now.getFullYear();
+  const minMonth = earliestOrder ? new Date(earliestOrder).getMonth() : now.getMonth();
+
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+
   const [downloading, setDownloading] = useState(false);
 
-  const summary = useMemo(() => {
-    const m = parseInt(month, 10) - 1;
-    const y = parseInt(year, 10);
-    if (isNaN(m) || isNaN(y) || m < 0 || m > 11 || y < 2020) return null;
-    return computeMonthlySummary(pastOrders, y, m);
-  }, [pastOrders, month, year]);
+  const summary = useMemo(
+    () => computeMonthlySummary(pastOrders, year, month),
+    [pastOrders, year, month],
+  );
 
-  const handleDownload = async () => {
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const isEarliestMonth = year === minYear && month === minMonth;
+
+  function prevMonth() {
+    if (isEarliestMonth) return;
+    if (month === 0) { setMonth(11); setYear(y => y - 1); }
+    else setMonth(m => m - 1);
+  }
+
+  function nextMonth() {
+    if (isCurrentMonth) return;
+    if (month === 11) { setMonth(0); setYear(y => y + 1); }
+    else setMonth(m => m + 1);
+  }
+
+  async function handleDownload() {
     if (!summary || !profile) return;
     setDownloading(true);
     try {
       const html = buildMonthlySummaryHtml(summary, profile);
-      await generateAndSharePdf(html, `gst-summary-${year}-${month.padStart(2, '0')}`);
+      const mm = String(month + 1).padStart(2, '0');
+      await generateAndSharePdf(html, `gst-summary-${year}-${mm}`);
     } catch {
       Alert.alert('Export Failed', 'Could not generate the summary. Please try again.');
     } finally {
       setDownloading(false);
     }
-  };
+  }
+
+  const hasData = summary.orderCount > 0;
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
           <ArrowLeft size={22} color={colors.navy} />
@@ -48,75 +100,78 @@ export default function EarningsScreen({ navigation }: any) {
         <Text style={styles.headerTitle}>Earnings</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Period input */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Period</Text>
-          <View style={styles.inputRow}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Month</Text>
-              <TextInput
-                style={styles.input}
-                value={month}
-                onChangeText={setMonth}
-                keyboardType="number-pad"
-                maxLength={2}
-                placeholder="1–12"
-                placeholderTextColor={colors.border}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Year</Text>
-              <TextInput
-                style={styles.input}
-                value={year}
-                onChangeText={setYear}
-                keyboardType="number-pad"
-                maxLength={4}
-                placeholder="2026"
-                placeholderTextColor={colors.border}
-              />
-            </View>
-          </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Period navigator */}
+        <View style={styles.periodRow}>
+          <TouchableOpacity
+            onPress={prevMonth}
+            style={[styles.chevron, isEarliestMonth && styles.chevronDisabled]}
+            disabled={isEarliestMonth}>
+            <ChevronLeft size={20} color={isEarliestMonth ? colors.border : colors.navy} />
+          </TouchableOpacity>
+          <Text style={styles.periodLabel}>{MONTH_NAMES[month]} {year}</Text>
+          <TouchableOpacity
+            onPress={nextMonth}
+            style={[styles.chevron, isCurrentMonth && styles.chevronDisabled]}
+            disabled={isCurrentMonth}>
+            <ChevronRight size={20} color={isCurrentMonth ? colors.border : colors.navy} />
+          </TouchableOpacity>
         </View>
 
-        {summary ? (
-          <>
-            {/* Summary grid */}
-            <View style={styles.grid}>
-              <SummaryCard label="Orders" value={String(summary.orderCount)} />
-              <SummaryCard label="Gross Revenue" value={`₹${summary.grossRevenue.toFixed(2)}`} />
-            </View>
-            <View style={styles.grid}>
-              <SummaryCard label="CGST Collected" value={`₹${summary.cgst.toFixed(2)}`} />
-              <SummaryCard label="SGST Collected" value={`₹${summary.sgst.toFixed(2)}`} />
-            </View>
-            <View style={styles.grid}>
-              <SummaryCard label="Platform Fees" value={`₹${summary.platformFees.toFixed(2)}`} />
-              <SummaryCard label="Net Payout" value={`₹${summary.netPayout.toFixed(2)}`} highlight />
-            </View>
+        {/* Hero — net payout */}
+        <View style={styles.hero}>
+          <Text style={styles.heroLabel}>GROSS EARNINGS</Text>
+          <Text style={styles.heroAmount}>{fmt(summary.grossRevenue)}</Text>
+          <Text style={styles.heroSub}>
+            {hasData
+              ? `from ${summary.orderCount} completed order${summary.orderCount === 1 ? '' : 's'}`
+              : 'No completed orders this month'}
+          </Text>
+        </View>
 
-            {/* GST download — only for registered vendors */}
-            {profile?.gstRegistered && (
-              <TouchableOpacity
-                style={styles.downloadBtn}
-                onPress={handleDownload}
-                disabled={downloading}
-                activeOpacity={0.8}>
-                {downloading
-                  ? <ActivityIndicator color={colors.primary} size="small" />
-                  : <>
-                      <Download size={16} color={colors.primary} />
-                      <Text style={styles.downloadText}>Download GST Summary PDF</Text>
-                    </>}
-              </TouchableOpacity>
-            )}
-          </>
-        ) : (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Enter a valid month (1–12) and year.</Text>
+        {/* Revenue section */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>REVENUE</Text>
+          <Row label="Gross Revenue" value={fmt(summary.grossRevenue)} />
+          <Row label="Orders Completed" value={String(summary.orderCount)} />
+        </View>
+
+        {/* GST section — only show if vendor is GST registered */}
+        {profile?.gstRegistered && (
+          <View style={[styles.card, styles.gstCard]}>
+            <View style={styles.cardTitleRow}>
+              <Text style={[styles.cardTitle, styles.gstTitle]}>GST COLLECTED</Text>
+              <View style={styles.remitBadge}>
+                <AlertCircle size={11} color="#EA580C" />
+                <Text style={styles.remitText}>Remit to govt</Text>
+              </View>
+            </View>
+            <Row label="CGST (2.5%)" value={fmt(summary.cgst)} />
+            <Row label="SGST (2.5%)" value={fmt(summary.sgst)} />
+            <Divider />
+            <Row label="Total GST" value={fmt(summary.totalTax)} bold />
           </View>
         )}
+
+        {/* Download CTA */}
+        {profile?.gstRegistered && (
+          <TouchableOpacity
+            style={[styles.downloadBtn, downloading && styles.downloadBtnDisabled]}
+            onPress={handleDownload}
+            disabled={downloading}
+            activeOpacity={0.85}>
+            {downloading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Download size={18} color="#fff" />
+                <Text style={styles.downloadText}>Download GST Summary PDF</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
     </View>
   );
@@ -124,6 +179,7 @@ export default function EarningsScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,47 +193,121 @@ const styles = StyleSheet.create({
   },
   back: { padding: 4 },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
-  content: { padding: spacing.md, gap: spacing.md },
-  section: {
+
+  scroll: { padding: spacing.md, gap: spacing.md, paddingBottom: 40 },
+
+  /* Period navigator */
+  periodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chevron: { padding: 4 },
+  chevronDisabled: { opacity: 0.4 },
+  periodLabel: { fontSize: 17, fontWeight: '700', color: colors.navy },
+
+  /* Hero card */
+  hero: {
+    backgroundColor: colors.navy,
+    borderRadius: radius.lg,
+    paddingVertical: 28,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  heroAmount: {
+    fontSize: 38,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: -1,
+  },
+  heroSub: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 2,
+  },
+
+  /* Generic card */
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: spacing.sm,
+    gap: 2,
   },
-  sectionTitle: {
-    fontSize: 13, fontWeight: '700', color: colors.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.5,
+  cardTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
-  inputRow: { flexDirection: 'row', gap: spacing.sm },
-  inputGroup: { flex: 1, gap: 6 },
-  inputLabel: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 10,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
+
+  /* GST card variant */
+  gstCard: {
+    backgroundColor: '#FFFBF5',
+    borderColor: '#FDBA74',
   },
-  grid: { flexDirection: 'row', gap: spacing.sm },
+  gstTitle: { color: '#C2410C' },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  remitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  remitText: { fontSize: 11, fontWeight: '600', color: '#EA580C' },
+
+  /* Row */
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  rowLabel: { fontSize: 14, color: colors.textSecondary },
+  rowLabelBold: { fontWeight: '700', color: colors.textPrimary },
+  rowValue: { fontSize: 14, fontWeight: '600', color: colors.navy },
+  rowValueBold: { fontSize: 15, fontWeight: '800', color: colors.navy },
+
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 4 },
+
+  /* Download button */
   downloadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    backgroundColor: '#FFF7ED',
-    marginTop: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    paddingVertical: 16,
+    marginTop: 4,
   },
-  downloadText: { fontSize: 15, fontWeight: '600', color: colors.primary },
-  empty: { alignItems: 'center', paddingTop: spacing.xl },
-  emptyText: { fontSize: 14, color: colors.textSecondary },
+  downloadBtnDisabled: { opacity: 0.6 },
+  downloadText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 });

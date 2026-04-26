@@ -1,22 +1,11 @@
-declare module 'react-native-html-to-pdf' {
-  interface Options {
-    html: string;
-    fileName: string;
-    base64?: boolean;
-    directory?: string;
-    height?: number;
-    width?: number;
-    paddingLeft?: number;
-    paddingRight?: number;
-    paddingTop?: number;
-    paddingBottom?: number;
-  }
-  interface Result {
+declare module 'react-native-print' {
+  interface PrintOptions {
+    html?: string;
     filePath?: string;
-    base64?: string;
+    isLandscape?: boolean;
   }
-  const RNHTMLtoPDF: { convert: (options: Options) => Promise<Result> };
-  export default RNHTMLtoPDF;
+  const RNPrint: { print: (options: PrintOptions) => Promise<void> };
+  export default RNPrint;
 }
 
 declare module 'react-native-share' {

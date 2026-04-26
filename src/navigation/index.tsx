@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
+import { TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ClipboardList, UtensilsCrossed, Store, History } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import { useAuthStore } from '../store/authStore';
 import { useVendorStore } from '../store/vendorStore';
@@ -56,7 +57,6 @@ function HistoryNavigator() {
 }
 
 function MainNavigator() {
-  const insets = useSafeAreaInsets();
   const pendingCount = useVendorStore(state =>
     state.activeOrders.filter(o => o.state.orderStatus === 'PENDING').length
   );
@@ -66,12 +66,9 @@ function MainNavigator() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-        },
+        tabBarActiveBackgroundColor: 'transparent',
+        tabBarButton: (props) => <TouchableOpacity {...props as any} activeOpacity={0.7} />,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarLabelStyle: { fontSize: 12 },
       }}>
       <Tab.Screen

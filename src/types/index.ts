@@ -65,8 +65,6 @@ export interface MonthlySummary {
   cgst: number;
   sgst: number;
   totalTax: number;
-  platformFees: number;
-  netPayout: number;
 }
 
 export interface VendorProfile {
