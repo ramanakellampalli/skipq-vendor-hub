@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
-import { History } from 'lucide-react-native';
+import { History, TrendingUp } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
 import { Order } from '../../types';
@@ -37,6 +37,7 @@ function applyFilter(orders: Order[], filter: Filter): Order[] {
 }
 
 export default function HistoryScreen({ navigation }: any) {
+  const gstRegistered = useVendorStore(state => state.profile?.gstRegistered ?? false);
   const pastOrders = useVendorStore(state => state.pastOrders);
   const setSync = useVendorStore(state => state.setSync);
   const [activeFilter, setActiveFilter] = useState<Filter>('today');
@@ -76,11 +77,22 @@ export default function HistoryScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>History</Text>
-        <Text style={styles.headerSub}>
-          {filtered.length} order{filtered.length !== 1 ? 's' : ''}
-          {activeFilter !== 'all' ? ` · ${FILTERS.find(f => f.key === activeFilter)?.label}` : ''}
-        </Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>History</Text>
+            <Text style={styles.headerSub}>
+              {filtered.length} order{filtered.length !== 1 ? 's' : ''}
+              {activeFilter !== 'all' ? ` · ${FILTERS.find(f => f.key === activeFilter)?.label}` : ''}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.earningsBtn}
+            onPress={() => navigation.navigate('Earnings')}
+            activeOpacity={0.8}>
+            <TrendingUp size={16} color={colors.primary} />
+            <Text style={styles.earningsBtnText}>Earnings</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.filterRow}>
@@ -135,8 +147,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  earningsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 8,
+    borderRadius: radius.sm,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  earningsBtnText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: spacing.md,

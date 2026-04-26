@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { Linking } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ClipboardList, UtensilsCrossed, Store, History } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import { useAuthStore } from '../store/authStore';
 import { useVendorStore } from '../store/vendorStore';
@@ -21,10 +21,12 @@ import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import MenuScreen from '../screens/menu/MenuScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import HistoryScreen from '../screens/history/HistoryScreen';
+import EarningsScreen from '../screens/history/EarningsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
+const HistoryStack = createStackNavigator();
 
 function AuthNavigator() {
   return (
@@ -36,7 +38,7 @@ function AuthNavigator() {
   );
 }
 
-function OrdersStack() {
+function OrdersNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="OrdersList" component={OrdersScreen} />
@@ -45,8 +47,16 @@ function OrdersStack() {
   );
 }
 
+function HistoryNavigator() {
+  return (
+    <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
+      <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
+      <HistoryStack.Screen name="Earnings" component={EarningsScreen} />
+    </HistoryStack.Navigator>
+  );
+}
+
 function MainNavigator() {
-  const insets = useSafeAreaInsets();
   const pendingCount = useVendorStore(state =>
     state.activeOrders.filter(o => o.state.orderStatus === 'PENDING').length
   );
@@ -56,17 +66,14 @@ function MainNavigator() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-        },
+        tabBarActiveBackgroundColor: 'transparent',
+        tabBarButton: (props) => <TouchableOpacity {...props as any} activeOpacity={0.7} />,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarLabelStyle: { fontSize: 12 },
       }}>
       <Tab.Screen
         name="Orders"
-        component={OrdersStack}
+        component={OrdersNavigator}
         options={{
           tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
@@ -76,23 +83,17 @@ function MainNavigator() {
       <Tab.Screen
         name="Menu"
         component={MenuScreen}
-        options={{
-          tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} />,
-        }}
+        options={{ tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} /> }}
       />
       <Tab.Screen
         name="History"
-        component={HistoryScreen}
-        options={{
-          tabBarIcon: ({ color }) => <History size={22} color={color} />,
-        }}
+        component={HistoryNavigator}
+        options={{ tabBarIcon: ({ color }) => <History size={22} color={color} /> }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Store size={22} color={color} />,
-        }}
+        options={{ tabBarIcon: ({ color }) => <Store size={22} color={color} /> }}
       />
     </Tab.Navigator>
   );
@@ -100,17 +101,14 @@ function MainNavigator() {
 
 const linking = {
   prefixes: ['skipq://'],
-  config: {
-    screens: {
-      SetupPassword: 'vendor/setup',
-    },
-  },
+  config: { screens: { SetupPassword: 'vendor/setup' } },
 };
 
 export default function Navigation() {
   const { token, isLoading } = useAuthStore();
   const setSync = useVendorStore(state => state.setSync);
   const vendorId = useVendorStore(state => state.profile?.id);
+
   useEffect(() => {
     if (!token) return;
     api.vendor.sync().then(res => setSync(res.data)).catch(() => {});

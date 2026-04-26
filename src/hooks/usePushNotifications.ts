@@ -17,14 +17,15 @@ export async function requestNotificationPermission(): Promise<boolean> {
     );
   }
 
-  const status = await requestPermission(getMessaging());
+  const m = getMessaging();
+  const status = await requestPermission(m);
   const granted =
     status === AuthorizationStatus.AUTHORIZED ||
     status === AuthorizationStatus.PROVISIONAL;
 
   if (!granted) return false;
 
-  const token = await getToken(getMessaging());
+  const token = await getToken(m);
   if (token) {
     await api.vendor.registerDeviceToken(token).catch(() => {});
   }

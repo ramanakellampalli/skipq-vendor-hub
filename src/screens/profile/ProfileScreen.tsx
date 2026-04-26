@@ -8,7 +8,6 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  StatusBar,
   Linking,
 } from 'react-native';
 import { AuthorizationStatus } from '@react-native-firebase/messaging';
@@ -277,7 +276,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   section: {
-    margin: spacing.md,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
