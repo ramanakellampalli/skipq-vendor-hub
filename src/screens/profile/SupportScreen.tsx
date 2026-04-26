@@ -17,6 +17,7 @@ const TYPE_LABELS: Record<ServiceRequestType, string> = {
   PAYOUT_ISSUE:  'Payout Issue',
   BILLING_ISSUE: 'Billing Issue',
   ACCOUNT_ISSUE: 'Account Issue',
+  REFUND_ISSUE:  'Refund Issue',
   TECHNICAL:     'Technical',
   OTHER:         'Other',
 };
