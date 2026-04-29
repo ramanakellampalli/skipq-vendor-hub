@@ -14,6 +14,10 @@ export const api = {
   auth: {
     login: (email: string, password: string) =>
       client.post('/api/v1/auth/login', { email, password }),
+    forgotPassword: (email: string) =>
+      client.post('/api/v1/auth/forgot-password', { email, role: 'VENDOR' }),
+    resetPassword: (email: string, otp: string, newPassword: string) =>
+      client.post('/api/v1/auth/reset-password', { email, role: 'VENDOR', otp, newPassword }),
     setupPassword: (token: string, newPassword: string) =>
       client.post('/api/v1/auth/setup-password', { token, newPassword }),
     setupAccount: (payload: {

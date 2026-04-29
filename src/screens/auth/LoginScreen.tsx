@@ -156,6 +156,12 @@ export default function LoginScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.setupLink}
+            onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.setupLink}
             onPress={() => (navigation as any).navigate('SetupPassword')}>
             <Text style={styles.setupLinkText}>New vendor? Set up your account →</Text>
           </TouchableOpacity>
@@ -221,4 +227,5 @@ const styles = StyleSheet.create({
   biometricText: { fontSize: 15, fontWeight: '600', color: colors.primary },
   setupLink: { alignItems: 'center', paddingVertical: spacing.sm },
   setupLinkText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  forgotText: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
 });
