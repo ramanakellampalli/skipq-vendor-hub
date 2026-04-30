@@ -16,7 +16,7 @@ function AppContent() {
 
   useEffect(() => {
     loadFromStorage();
-  }, []);
+  }, [loadFromStorage]);
 
   useEffect(() => {
     if (!token) {
@@ -24,14 +24,16 @@ function AppContent() {
       return;
     }
     api.vendor.sync().then(res => setSync(res.data)).catch(() => setSync({ profile: null as any, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [] }));
-  }, [token]);
+  }, [token, reset, setSync]);
 
   return <Navigation />;
 }
 
+const rootStyle = { flex: 1 };
+
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />

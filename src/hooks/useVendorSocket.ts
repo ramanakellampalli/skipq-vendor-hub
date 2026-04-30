@@ -9,6 +9,8 @@ const NEW_ORDER_PATTERN = [0, 300, 150, 300];
 
 export function useVendorSocket(vendorId: string | undefined) {
   const upsertOrder = useVendorStore(state => state.upsertOrder);
+  const addAlertId = useVendorStore(state => state.addAlertId);
+  const removeAlertId = useVendorStore(state => state.removeAlertId);
   const clientRef = useRef<Ably.Realtime | null>(null);
   const activeOrdersRef = useRef(useVendorStore.getState().activeOrders);
 
@@ -32,9 +34,16 @@ export function useVendorSocket(vendorId: string | undefined) {
     channel.subscribe('order', message => {
       const order: Order = JSON.parse(message.data);
       const isNew = !activeOrdersRef.current.some(o => o.id === order.id);
-      if (isNew && order.state.orderStatus === 'PENDING') {
-        Vibration.vibrate(NEW_ORDER_PATTERN);
+
+      if (order.state.orderStatus === 'PENDING') {
+        if (isNew) {
+          Vibration.vibrate(NEW_ORDER_PATTERN);
+          addAlertId(order.id);
+        }
+      } else {
+        removeAlertId(order.id);
       }
+
       upsertOrder(order);
     });
 
@@ -54,5 +63,5 @@ export function useVendorSocket(vendorId: string | undefined) {
       client.close();
       clientRef.current = null;
     };
-  }, [vendorId, upsertOrder]);
+  }, [vendorId, upsertOrder, addAlertId, removeAlertId]);
 }

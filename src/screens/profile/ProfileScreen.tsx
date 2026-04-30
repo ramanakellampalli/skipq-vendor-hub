@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   });
 
   const handlePrepTimeSave = () => {
-    const val = parseInt(prepTime);
+    const val = parseInt(prepTime, 10);
     if (isNaN(val) || val < 1) {
       Alert.alert('Error', 'Please enter a valid prep time');
       return;

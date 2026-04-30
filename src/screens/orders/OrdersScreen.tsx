@@ -18,6 +18,7 @@ import { colors, radius, spacing } from '../../theme';
 import { Order, OrderStatus } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import { useVendorStore } from '../../store/vendorStore';
+import { useOrderAlert } from '../../hooks/useOrderAlert';
 import { timeAgo } from '../../utils/time';
 
 const CARD_ACTIONS: Partial<Record<OrderStatus, { next?: OrderStatus; reject?: boolean; label?: string }>> = {
@@ -49,6 +50,8 @@ export default function OrdersScreen({ navigation }: any) {
   const setSync = useVendorStore(state => state.setSync);
   const upsertOrder = useVendorStore(state => state.upsertOrder);
   const isSynced = useVendorStore(state => state.isSynced);
+
+  useOrderAlert();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());

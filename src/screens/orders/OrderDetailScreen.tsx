@@ -151,7 +151,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           )}
           {actions.next && (
             <TouchableOpacity
-              style={[styles.actionButton, !actions.reject && { flex: 1 }]}
+              style={[styles.actionButton, !actions.reject && styles.actionButtonFull]}
               onPress={() => updateStatus.mutate(actions.next!)}
               disabled={updateStatus.isPending}>
               {updateStatus.isPending ? (
@@ -219,6 +219,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  actionButtonFull: { flex: 1 },
   actionText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   rejectButton: {
     flex: 1,
