@@ -19,7 +19,7 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
   const [token, setToken] = useState(route?.params?.token || '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {

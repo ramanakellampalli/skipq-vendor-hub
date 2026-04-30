@@ -9,6 +9,7 @@ interface VendorState {
   uncategorized: MenuItem[];
   serviceRequests: ServiceRequest[];
   isSynced: boolean;
+  pendingAlertIds: Set<string>;
 
   setSync: (data: {
     profile: VendorProfile;
@@ -23,6 +24,8 @@ interface VendorState {
 
   setProfile: (profile: VendorProfile) => void;
   upsertOrder: (order: Order) => void;
+  addAlertId: (id: string) => void;
+  removeAlertId: (id: string) => void;
 
   upsertCategory: (category: MenuCategory) => void;
   removeCategory: (id: string) => void;
@@ -49,9 +52,14 @@ export const useVendorStore = create<VendorState>(set => ({
   uncategorized: [],
   serviceRequests: [],
   isSynced: false,
+  pendingAlertIds: new Set<string>(),
 
-  setSync: ({ profile, activeOrders, pastOrders, categories, uncategorized, serviceRequests }) =>
-    set({ profile: profile ?? null, activeOrders, pastOrders, categories, uncategorized, serviceRequests: serviceRequests ?? [], isSynced: true }),
+  setSync: ({ profile, activeOrders, pastOrders, categories, uncategorized, serviceRequests }) => {
+    const pendingAlertIds = new Set(
+      activeOrders.filter(o => o.state.orderStatus === 'PENDING').map(o => o.id),
+    );
+    set({ profile: profile ?? null, activeOrders, pastOrders, categories, uncategorized, serviceRequests: serviceRequests ?? [], isSynced: true, pendingAlertIds });
+  },
 
   addServiceRequest: (sr) =>
     set(state => ({ serviceRequests: [sr, ...state.serviceRequests] })),
@@ -150,6 +158,16 @@ export const useVendorStore = create<VendorState>(set => ({
       };
     }),
 
+  addAlertId: (id) =>
+    set(state => ({ pendingAlertIds: new Set([...state.pendingAlertIds, id]) })),
+
+  removeAlertId: (id) =>
+    set(state => {
+      const next = new Set(state.pendingAlertIds);
+      next.delete(id);
+      return { pendingAlertIds: next };
+    }),
+
   reset: () =>
-    set({ profile: null, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [], isSynced: false }),
+    set({ profile: null, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set() }),
 }));

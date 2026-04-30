@@ -17,19 +17,19 @@ import StatusBadge from '../../components/StatusBadge';
 import DownloadInvoiceButton from '../../components/DownloadInvoiceButton';
 import { useVendorStore } from '../../store/vendorStore';
 
-const STATUS_ACTIONS: Record<OrderStatus, { next?: OrderStatus; reject?: boolean }> = {
-  PENDING: { next: 'ACCEPTED', reject: true },
-  ACCEPTED: { next: 'PREPARING' },
-  PREPARING: { next: 'READY' },
-  READY: { next: 'COMPLETED' },
+const STATUS_ACTIONS: Record<OrderStatus, { next?: OrderStatus; reject?: boolean; canComplete?: boolean }> = {
+  PENDING:   { next: 'ACCEPTED', reject: true },
+  ACCEPTED:  { next: 'PREPARING', canComplete: true },
+  PREPARING: { next: 'READY', canComplete: true },
+  READY:     { next: 'COMPLETED' },
   COMPLETED: {},
-  REJECTED: {},
+  REJECTED:  {},
 };
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
-  ACCEPTED: 'Accept Order',
+  ACCEPTED:  'Accept Order',
   PREPARING: 'Start Preparing',
-  READY: 'Mark Ready',
+  READY:     'Mark Ready',
   COMPLETED: 'Complete Order',
 };
 
@@ -139,11 +139,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
               onPress={() =>
                 Alert.alert('Reject Order', 'Are you sure?', [
                   { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Reject',
-                    style: 'destructive',
-                    onPress: () => updateStatus.mutate('REJECTED'),
-                  },
+                  { text: 'Reject', style: 'destructive', onPress: () => updateStatus.mutate('REJECTED') },
                 ])
               }>
               <Text style={styles.rejectText}>Reject</Text>
@@ -151,7 +147,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           )}
           {actions.next && (
             <TouchableOpacity
-              style={[styles.actionButton, !actions.reject && { flex: 1 }]}
+              style={[styles.actionButton, !actions.reject && !actions.canComplete && styles.actionButtonFull]}
               onPress={() => updateStatus.mutate(actions.next!)}
               disabled={updateStatus.isPending}>
               {updateStatus.isPending ? (
@@ -161,6 +157,14 @@ export default function OrderDetailScreen({ route, navigation }: any) {
                   {ACTION_LABELS[actions.next] ?? actions.next}
                 </Text>
               )}
+            </TouchableOpacity>
+          )}
+          {actions.canComplete && (
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={() => updateStatus.mutate('COMPLETED')}
+              disabled={updateStatus.isPending}>
+              <Text style={styles.completeText}>Complete</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -219,6 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  actionButtonFull: { flex: 1 },
   actionText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   rejectButton: {
     flex: 1,
@@ -229,6 +234,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rejectText: { color: colors.error, fontSize: 16, fontWeight: '700' },
+  completeButton: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: colors.success,
+    borderRadius: radius.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  completeText: { color: colors.success, fontSize: 16, fontWeight: '700' },
   invoiceRow: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,

@@ -125,7 +125,7 @@ function ItemModal({ visible, editing, categories, onClose, onSaved }: ItemModal
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.saveBtn, busy && { opacity: 0.6 }]} onPress={handleSave} disabled={busy}>
+            <TouchableOpacity style={[styles.saveBtn, busy && styles.saveBtnBusy]} onPress={handleSave} disabled={busy}>
               <Text style={styles.saveText}>{editing ? 'Save' : 'Add Item'}</Text>
             </TouchableOpacity>
           </View>
@@ -205,7 +205,7 @@ function VariantModal({ visible, itemId, editing, onClose, onSaved }: VariantMod
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.saveBtn, busy && { opacity: 0.6 }]} onPress={handleSave} disabled={busy}>
+            <TouchableOpacity style={[styles.saveBtn, busy && styles.saveBtnBusy]} onPress={handleSave} disabled={busy}>
               <Text style={styles.saveText}>{editing ? 'Save' : 'Add'}</Text>
             </TouchableOpacity>
           </View>
@@ -308,8 +308,9 @@ function ItemCard({
     <View style={styles.itemCard}>
       <View style={styles.itemHeader}>
         <View style={styles.itemLeft}>
+          {/* eslint-disable-next-line react-native/no-inline-styles */}
           <View style={[styles.vegDot, { backgroundColor: item.isVeg ? colors.success : '#e53935' }]} />
-          <View style={{ flex: 1 }}>
+          <View style={styles.itemFlex}>
             <Text style={styles.itemName}>{item.name}</Text>
             {item.description ? (
               <Text style={styles.itemDesc} numberOfLines={1}>{item.description}</Text>
@@ -341,10 +342,10 @@ function ItemCard({
                 {v.label ? `${v.label} · ` : ''}₹{v.price.toFixed(2)}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onEditVariant(v)} style={{ paddingLeft: 4 }}>
+            <TouchableOpacity onPress={() => onEditVariant(v)} style={styles.variantEditBtn}>
               <Pencil size={12} color={colors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDeleteVariant(v)} style={{ paddingLeft: 2 }}>
+            <TouchableOpacity onPress={() => onDeleteVariant(v)} style={styles.variantDeleteBtn}>
               <Trash2 size={12} color={colors.error} />
             </TouchableOpacity>
           </View>
@@ -805,4 +806,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  saveBtnBusy: { opacity: 0.6 },
+  itemFlex: { flex: 1 },
+  variantEditBtn: { paddingLeft: 4 },
+  variantDeleteBtn: { paddingLeft: 2 },
 });

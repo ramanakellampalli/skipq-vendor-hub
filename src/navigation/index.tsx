@@ -12,6 +12,7 @@ import { useVendorSocket } from '../hooks/useVendorSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { api } from '../api';
 import { colors } from '../theme';
+import OrderAlertPlayer from '../components/OrderAlertPlayer';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
@@ -30,6 +31,12 @@ import EarningsScreen from '../screens/history/EarningsScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
+
+const TabBarButton = (props: any) => <TouchableOpacity {...props} activeOpacity={0.7} />;
+const IconOrders = ({ color }: { color: string }) => <ClipboardList size={22} color={color} />;
+const IconMenu = ({ color }: { color: string }) => <UtensilsCrossed size={22} color={color} />;
+const IconHistory = ({ color }: { color: string }) => <History size={22} color={color} />;
+const IconProfile = ({ color }: { color: string }) => <Store size={22} color={color} />;
 const HistoryStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
 
@@ -84,7 +91,7 @@ function MainNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarActiveBackgroundColor: 'transparent',
-        tabBarButton: (props) => <TouchableOpacity {...props as any} activeOpacity={0.7} />,
+        tabBarButton: TabBarButton,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarLabelStyle: { fontSize: 12 },
       }}>
@@ -92,7 +99,7 @@ function MainNavigator() {
         name="Orders"
         component={OrdersNavigator}
         options={{
-          tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
+          tabBarIcon: IconOrders,
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.error, fontSize: 11 },
         }}
@@ -100,17 +107,17 @@ function MainNavigator() {
       <Tab.Screen
         name="Menu"
         component={MenuScreen}
-        options={{ tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} /> }}
+        options={{ tabBarIcon: IconMenu }}
       />
       <Tab.Screen
         name="History"
         component={HistoryNavigator}
-        options={{ tabBarIcon: ({ color }) => <History size={22} color={color} /> }}
+        options={{ tabBarIcon: IconHistory }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileNavigator}
-        options={{ tabBarIcon: ({ color }) => <Store size={22} color={color} /> }}
+        options={{ tabBarIcon: IconProfile }}
       />
     </Tab.Navigator>
   );
@@ -138,7 +145,12 @@ export default function Navigation() {
 
   return (
     <NavigationContainer linking={linking}>
-      {token ? <MainNavigator /> : <AuthNavigator />}
+      {token ? (
+        <>
+          <MainNavigator />
+          <OrderAlertPlayer />
+        </>
+      ) : <AuthNavigator />}
     </NavigationContainer>
   );
 }

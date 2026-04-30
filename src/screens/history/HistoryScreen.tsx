@@ -37,7 +37,6 @@ function applyFilter(orders: Order[], filter: Filter): Order[] {
 }
 
 export default function HistoryScreen({ navigation }: any) {
-  const gstRegistered = useVendorStore(state => state.profile?.gstRegistered ?? false);
   const pastOrders = useVendorStore(state => state.pastOrders);
   const setSync = useVendorStore(state => state.setSync);
   const [activeFilter, setActiveFilter] = useState<Filter>('today');
