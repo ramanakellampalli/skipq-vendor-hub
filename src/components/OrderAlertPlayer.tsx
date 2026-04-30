@@ -10,7 +10,7 @@ export default function OrderAlertPlayer() {
 
   return (
     <Video
-      source={require('../assets/sounds/order_alert.mp3')}
+      source={require('../assets/sounds/order_alert.wav')}
       repeat
       paused={false}
       playInBackground
