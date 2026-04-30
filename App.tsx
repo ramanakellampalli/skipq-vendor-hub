@@ -6,25 +6,20 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Navigation from './src/navigation';
 import { useAuthStore } from './src/store/authStore';
 import { useVendorStore } from './src/store/vendorStore';
-import { api } from './src/api';
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   const { loadFromStorage, token } = useAuthStore();
-  const { setSync, reset } = useVendorStore();
+  const reset = useVendorStore(state => state.reset);
 
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
 
   useEffect(() => {
-    if (!token) {
-      reset();
-      return;
-    }
-    api.vendor.sync().then(res => setSync(res.data)).catch(() => setSync({ profile: null as any, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [] }));
-  }, [token, reset, setSync]);
+    if (!token) { reset(); }
+  }, [token, reset]);
 
   return <Navigation />;
 }

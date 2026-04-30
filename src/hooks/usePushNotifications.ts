@@ -40,9 +40,15 @@ export function usePushNotifications(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
 
-    requestNotificationPermission();
+    let registeredToken: string | null = null;
+
+    requestNotificationPermission().then(() => {
+      getToken(getMessaging()).then(t => { registeredToken = t; }).catch(() => {});
+    });
 
     const unsubscribe = onTokenRefresh(getMessaging(), token => {
+      if (token === registeredToken) return;
+      registeredToken = token;
       api.vendor.registerDeviceToken(token).catch(() => {});
     });
 
