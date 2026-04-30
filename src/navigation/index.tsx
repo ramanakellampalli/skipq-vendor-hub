@@ -12,6 +12,7 @@ import { useVendorSocket } from '../hooks/useVendorSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { api } from '../api';
 import { colors } from '../theme';
+import OrderAlertPlayer from '../components/OrderAlertPlayer';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
@@ -144,7 +145,12 @@ export default function Navigation() {
 
   return (
     <NavigationContainer linking={linking}>
-      {token ? <MainNavigator /> : <AuthNavigator />}
+      {token ? (
+        <>
+          <MainNavigator />
+          <OrderAlertPlayer />
+        </>
+      ) : <AuthNavigator />}
     </NavigationContainer>
   );
 }
