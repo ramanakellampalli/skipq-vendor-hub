@@ -305,6 +305,13 @@ export default function MenuScreen({ navigation }: any) {
           <Text style={styles.headerTitle}>Menu</Text>
           <Text style={styles.headerSub}>{items.length} items</Text>
         </View>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => { setEditingItem(null); navigation.navigate('AddMenuItem'); }}
+          activeOpacity={0.8}>
+          <Plus size={14} color="#fff" />
+          <Text style={styles.addBtnText}>Add item</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -331,10 +338,6 @@ export default function MenuScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
-
-      <TouchableOpacity style={styles.fab} onPress={() => { setEditingItem(null); navigation.navigate('AddMenuItem'); }}>
-        <Plus size={24} color="#fff" />
-      </TouchableOpacity>
 
       <VariantModal
         visible={variantModal.visible}
@@ -364,6 +367,16 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.navy,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+  },
+  addBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   scrollContent: { padding: spacing.md, gap: spacing.md, paddingBottom: 100 },
 
   section: {
@@ -445,23 +458,6 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: spacing.sm },
   emptyText: { fontSize: 16, fontWeight: '600', color: colors.textSecondary },
   emptyHint: { fontSize: 14, color: colors.textSecondary },
-
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
 
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: {
