@@ -23,7 +23,7 @@ type Filter = 'ALL' | 'NEW' | 'PREPARING' | 'READY';
 const FILTER_LABELS: Record<Filter, string> = {
   ALL: 'All',
   NEW: 'New',
-  PREPARING: 'Preparing',
+  PREPARING: 'Prep',
   READY: 'Ready',
 };
 
@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
 
   filterRow: {
     flexDirection: 'row',
+    flexWrap: 'nowrap',
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     gap: spacing.sm,
