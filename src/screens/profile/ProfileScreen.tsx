@@ -189,25 +189,6 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <TouchableOpacity style={styles.row} onPress={handleEnableNotifications} activeOpacity={0.7}>
-          <View style={styles.notifLeft}>
-            {notifStatus === AuthorizationStatus.AUTHORIZED
-              ? <Bell size={16} color={colors.primary} />
-              : <BellOff size={16} color={colors.textSecondary} />}
-            <Text style={styles.rowLabel}>Order Alerts</Text>
-          </View>
-          <Text style={styles.rowValue}>
-            {notifStatus === AuthorizationStatus.AUTHORIZED
-              ? 'Enabled'
-              : notifStatus === AuthorizationStatus.DENIED
-                ? 'Blocked — tap to open settings'
-                : 'Tap to enable'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Business & Payouts</Text>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>KYC Status</Text>
@@ -253,15 +234,28 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Activity</Text>
+        <Text style={styles.sectionTitle}>General</Text>
+        <TouchableOpacity style={styles.row} onPress={handleEnableNotifications} activeOpacity={0.7}>
+          <View style={styles.notifLeft}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? <Bell size={16} color={colors.primary} />
+              : <BellOff size={16} color={colors.textSecondary} />}
+            <Text style={styles.rowLabel}>Order Alerts</Text>
+          </View>
+          <Text style={styles.rowValue}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? 'Enabled'
+              : notifStatus === AuthorizationStatus.DENIED
+                ? 'Blocked'
+                : 'Tap to enable'}
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
         <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('History')} activeOpacity={0.7}>
           <Text style={styles.rowLabel}>Order History</Text>
           <ChevronRight size={16} color={colors.textSecondary} />
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Help</Text>
+        <View style={styles.divider} />
         <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Support')} activeOpacity={0.7}>
           <Text style={styles.rowLabel}>Contact Support</Text>
           <ChevronRight size={16} color={colors.textSecondary} />
