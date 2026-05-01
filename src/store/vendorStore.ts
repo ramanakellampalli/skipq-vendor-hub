@@ -1,22 +1,21 @@
 import { create } from 'zustand';
-import { Order, MenuItem, MenuCategory, MenuVariant, VendorProfile, ServiceRequest } from '../types';
+import { Order, MenuItem, MenuVariant, VendorProfile, ServiceRequest } from '../types';
 
 interface VendorState {
   profile: VendorProfile | null;
   activeOrders: Order[];
   pastOrders: Order[];
-  categories: MenuCategory[];
-  uncategorized: MenuItem[];
+  items: MenuItem[];
   serviceRequests: ServiceRequest[];
   isSynced: boolean;
   pendingAlertIds: Set<string>;
+  editingItem: MenuItem | null;
 
   setSync: (data: {
     profile: VendorProfile;
     activeOrders: Order[];
     pastOrders: Order[];
-    categories: MenuCategory[];
-    uncategorized: MenuItem[];
+    items: MenuItem[];
     serviceRequests: ServiceRequest[];
   }) => void;
 
@@ -27,8 +26,7 @@ interface VendorState {
   addAlertId: (id: string) => void;
   removeAlertId: (id: string) => void;
 
-  upsertCategory: (category: MenuCategory) => void;
-  removeCategory: (id: string) => void;
+  setEditingItem: (item: MenuItem | null) => void;
 
   upsertMenuItem: (item: MenuItem) => void;
   removeMenuItem: (id: string) => void;
@@ -39,26 +37,21 @@ interface VendorState {
   reset: () => void;
 }
 
-function upsertItemInList(items: MenuItem[], item: MenuItem): MenuItem[] {
-  const exists = items.some(m => m.id === item.id);
-  return exists ? items.map(m => m.id === item.id ? item : m) : [...items, item];
-}
-
 export const useVendorStore = create<VendorState>(set => ({
   profile: null,
   activeOrders: [],
   pastOrders: [],
-  categories: [],
-  uncategorized: [],
+  items: [],
   serviceRequests: [],
   isSynced: false,
   pendingAlertIds: new Set<string>(),
+  editingItem: null,
 
-  setSync: ({ profile, activeOrders, pastOrders, categories, uncategorized, serviceRequests }) => {
+  setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests }) => {
     const pendingAlertIds = new Set(
       activeOrders.filter(o => o.state.orderStatus === 'PENDING').map(o => o.id),
     );
-    set({ profile: profile ?? null, activeOrders, pastOrders, categories, uncategorized, serviceRequests: serviceRequests ?? [], isSynced: true, pendingAlertIds });
+    set({ profile: profile ?? null, activeOrders, pastOrders, items, serviceRequests: serviceRequests ?? [], isSynced: true, pendingAlertIds });
   },
 
   addServiceRequest: (sr) =>
@@ -86,77 +79,43 @@ export const useVendorStore = create<VendorState>(set => ({
       return { activeOrders: [order, ...removeFrom(state.activeOrders)] };
     }),
 
-  upsertCategory: category =>
-    set(state => {
-      const exists = state.categories.some(c => c.id === category.id);
-      return {
-        categories: exists
-          ? state.categories.map(c => c.id === category.id ? category : c)
-          : [...state.categories, category],
-      };
-    }),
-
-  removeCategory: id =>
-    set(state => ({ categories: state.categories.filter(c => c.id !== id) })),
+  setEditingItem: item => set({ editingItem: item }),
 
   upsertMenuItem: item =>
     set(state => {
-      if (!item.categoryId) {
-        return { uncategorized: upsertItemInList(state.uncategorized, item) };
-      }
+      const exists = state.items.some(m => m.id === item.id);
       return {
-        categories: state.categories.map(c =>
-          c.id === item.categoryId
-            ? { ...c, items: upsertItemInList(c.items, item) }
-            : c
-        ),
-        uncategorized: state.uncategorized.filter(m => m.id !== item.id),
+        items: exists
+          ? state.items.map(m => m.id === item.id ? item : m)
+          : [...state.items, item],
       };
     }),
 
   removeMenuItem: id =>
-    set(state => ({
-      uncategorized: state.uncategorized.filter(m => m.id !== id),
-      categories: state.categories.map(c => ({
-        ...c,
-        items: c.items.filter(m => m.id !== id),
-      })),
-    })),
+    set(state => ({ items: state.items.filter(m => m.id !== id) })),
 
   upsertVariant: (itemId, variant) =>
-    set(state => {
-      const patchVariants = (items: MenuItem[]) =>
-        items.map(m => {
-          if (m.id !== itemId) return m;
-          const exists = m.variants.some(v => v.id === variant.id);
-          return {
-            ...m,
-            variants: exists
-              ? m.variants.map(v => v.id === variant.id ? variant : v)
-              : [...m.variants, variant],
-          };
-        });
-
-      return {
-        uncategorized: patchVariants(state.uncategorized),
-        categories: state.categories.map(c => ({ ...c, items: patchVariants(c.items) })),
-      };
-    }),
+    set(state => ({
+      items: state.items.map(m => {
+        if (m.id !== itemId) return m;
+        const exists = m.variants.some(v => v.id === variant.id);
+        return {
+          ...m,
+          variants: exists
+            ? m.variants.map(v => v.id === variant.id ? variant : v)
+            : [...m.variants, variant],
+        };
+      }),
+    })),
 
   removeVariant: (itemId, variantId) =>
-    set(state => {
-      const patch = (items: MenuItem[]) =>
-        items.map(m =>
-          m.id === itemId
-            ? { ...m, variants: m.variants.filter(v => v.id !== variantId) }
-            : m
-        );
-
-      return {
-        uncategorized: patch(state.uncategorized),
-        categories: state.categories.map(c => ({ ...c, items: patch(c.items) })),
-      };
-    }),
+    set(state => ({
+      items: state.items.map(m =>
+        m.id === itemId
+          ? { ...m, variants: m.variants.filter(v => v.id !== variantId) }
+          : m
+      ),
+    })),
 
   addAlertId: (id) =>
     set(state => ({ pendingAlertIds: new Set([...state.pendingAlertIds, id]) })),
@@ -169,5 +128,5 @@ export const useVendorStore = create<VendorState>(set => ({
     }),
 
   reset: () =>
-    set({ profile: null, activeOrders: [], pastOrders: [], categories: [], uncategorized: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set() }),
+    set({ profile: null, activeOrders: [], pastOrders: [], items: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set(), editingItem: null }),
 }));

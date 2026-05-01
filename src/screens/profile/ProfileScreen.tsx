@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AuthorizationStatus } from '@react-native-firebase/messaging';
 import { useMutation } from '@tanstack/react-query';
 import { LogOut, Trash2, Bell, BellOff, ChevronRight } from 'lucide-react-native';
@@ -23,6 +23,14 @@ import { colors, radius, spacing } from '../../theme';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
+
   const { logout, name, email } = useAuthStore();
   const profile = useVendorStore(state => state.profile);
   const setProfile = useVendorStore(state => state.setProfile);
@@ -113,7 +121,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
@@ -189,25 +197,6 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <TouchableOpacity style={styles.row} onPress={handleEnableNotifications} activeOpacity={0.7}>
-          <View style={styles.notifLeft}>
-            {notifStatus === AuthorizationStatus.AUTHORIZED
-              ? <Bell size={16} color={colors.primary} />
-              : <BellOff size={16} color={colors.textSecondary} />}
-            <Text style={styles.rowLabel}>Order Alerts</Text>
-          </View>
-          <Text style={styles.rowValue}>
-            {notifStatus === AuthorizationStatus.AUTHORIZED
-              ? 'Enabled'
-              : notifStatus === AuthorizationStatus.DENIED
-                ? 'Blocked — tap to open settings'
-                : 'Tap to enable'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Business & Payouts</Text>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>KYC Status</Text>
@@ -253,7 +242,28 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Help</Text>
+        <Text style={styles.sectionTitle}>General</Text>
+        <TouchableOpacity style={styles.row} onPress={handleEnableNotifications} activeOpacity={0.7}>
+          <View style={styles.notifLeft}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? <Bell size={16} color={colors.primary} />
+              : <BellOff size={16} color={colors.textSecondary} />}
+            <Text style={styles.rowLabel}>Order Alerts</Text>
+          </View>
+          <Text style={styles.rowValue}>
+            {notifStatus === AuthorizationStatus.AUTHORIZED
+              ? 'Enabled'
+              : notifStatus === AuthorizationStatus.DENIED
+                ? 'Blocked'
+                : 'Tap to enable'}
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+        <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('History')} activeOpacity={0.7}>
+          <Text style={styles.rowLabel}>Order History</Text>
+          <ChevronRight size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.divider} />
         <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Support')} activeOpacity={0.7}>
           <Text style={styles.rowLabel}>Contact Support</Text>
           <ChevronRight size={16} color={colors.textSecondary} />
