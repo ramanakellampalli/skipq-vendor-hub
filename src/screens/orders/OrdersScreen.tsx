@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Alert,
   RefreshControl,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -209,11 +208,7 @@ export default function OrdersScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterRow}>
+      <View style={styles.filterRow}>
         {(Object.keys(FILTER_LABELS) as Filter[]).map(f => (
           <TouchableOpacity
             key={f}
@@ -225,7 +220,7 @@ export default function OrdersScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       <FlatList
         data={filteredOrders}
@@ -269,17 +264,14 @@ const styles = StyleSheet.create({
   title:    { fontSize: 22, fontWeight: '800', color: colors.navy },
   subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
 
-  filterScroll: {
-    flexGrow: 0,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
   filterRow: {
+    flexDirection: 'row',
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     gap: spacing.sm,
-    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   chip: {
     paddingHorizontal: 12,
