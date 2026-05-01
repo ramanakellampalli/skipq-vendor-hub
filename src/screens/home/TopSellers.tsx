@@ -26,17 +26,20 @@ export default function TopSellers({ sellers, onManageMenu }: Props) {
         </View>
       ) : (
         sellers.map((seller, i) => (
-          <View key={seller.menuItemId} style={styles.row}>
-            <Text style={styles.rank}>{String(i + 1).padStart(2, '0')}</Text>
-            <View style={styles.info}>
-              <View style={styles.nameRow}>
-                <Text style={styles.name} numberOfLines={1}>{seller.name}</Text>
-                <Text style={styles.revenue}>₹{seller.revenue.toFixed(0)}</Text>
+          <View key={seller.menuItemId} style={styles.card}>
+            <View style={styles.rowTop}>
+              <Text style={styles.rank}>{String(i + 1).padStart(2, '0')}</Text>
+              <View style={styles.imagePlaceholder} />
+              <View style={styles.info}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.name} numberOfLines={1}>{seller.name}</Text>
+                  <Text style={styles.revenue}>₹{seller.revenue.toFixed(0)}</Text>
+                </View>
+                <Text style={styles.sold}>{seller.quantity} sold</Text>
               </View>
-              <Text style={styles.sold}>{seller.quantity} sold</Text>
-              <View style={styles.barBg}>
-                <View style={[styles.barFill, { width: `${(seller.quantity / maxQty) * 100}%` }]} />
-              </View>
+            </View>
+            <View style={styles.barBg}>
+              <View style={[styles.barFill, { width: `${(seller.quantity / maxQty) * 100}%` as any }]} />
             </View>
           </View>
         ))
@@ -46,32 +49,45 @@ export default function TopSellers({ sellers, onManageMenu }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.md },
+  container: { gap: spacing.sm },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   title: { fontSize: 17, fontWeight: '700', color: colors.navy },
-manageText: { fontSize: 13, fontWeight: '600', color: colors.primary },
+  manageText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   empty: { paddingVertical: spacing.lg, alignItems: 'center' },
   emptyText: { fontSize: 14, color: colors.textSecondary },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
+  card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 0,
+    overflow: 'hidden',
   },
-  rank: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, width: 22, marginTop: 2 },
-  info: { flex: 1, gap: 4 },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  rank: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, width: 20 },
+  imagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.sm,
+    backgroundColor: '#F5EFE6',
+  },
+  info: { flex: 1 },
   nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 15, fontWeight: '600', color: colors.navy, flex: 1 },
+  name: { fontSize: 15, fontWeight: '600', color: colors.navy, flex: 1, marginRight: 8 },
   revenue: { fontSize: 15, fontWeight: '700', color: colors.navy },
-  sold: { fontSize: 12, color: colors.primary, fontWeight: '600' },
-  barBg: { height: 3, backgroundColor: colors.border, borderRadius: 2, marginTop: 2 },
-  barFill: { height: 3, backgroundColor: colors.primary, borderRadius: 2 },
+  sold: { fontSize: 12, color: colors.primary, fontWeight: '600', marginTop: 2 },
+  barBg: { height: 3, backgroundColor: colors.border },
+  barFill: { height: 3, backgroundColor: colors.primary },
 });
