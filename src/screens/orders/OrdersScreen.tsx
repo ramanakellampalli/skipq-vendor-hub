@@ -212,6 +212,7 @@ export default function OrdersScreen({ navigation }: any) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
         contentContainerStyle={styles.filterRow}>
         {(Object.keys(FILTER_LABELS) as Filter[]).map(f => (
           <TouchableOpacity
@@ -268,13 +269,17 @@ const styles = StyleSheet.create({
   title:    { fontSize: 22, fontWeight: '800', color: colors.navy },
   subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
 
+  filterScroll: {
+    flexGrow: 0,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   filterRow: {
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    alignItems: 'center',
   },
   chip: {
     paddingHorizontal: 12,
