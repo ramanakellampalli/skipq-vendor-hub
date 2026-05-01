@@ -9,6 +9,7 @@ interface VendorState {
   serviceRequests: ServiceRequest[];
   isSynced: boolean;
   pendingAlertIds: Set<string>;
+  editingItem: MenuItem | null;
 
   setSync: (data: {
     profile: VendorProfile;
@@ -24,6 +25,8 @@ interface VendorState {
   upsertOrder: (order: Order) => void;
   addAlertId: (id: string) => void;
   removeAlertId: (id: string) => void;
+
+  setEditingItem: (item: MenuItem | null) => void;
 
   upsertMenuItem: (item: MenuItem) => void;
   removeMenuItem: (id: string) => void;
@@ -42,6 +45,7 @@ export const useVendorStore = create<VendorState>(set => ({
   serviceRequests: [],
   isSynced: false,
   pendingAlertIds: new Set<string>(),
+  editingItem: null,
 
   setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests }) => {
     const pendingAlertIds = new Set(
@@ -74,6 +78,8 @@ export const useVendorStore = create<VendorState>(set => ({
 
       return { activeOrders: [order, ...removeFrom(state.activeOrders)] };
     }),
+
+  setEditingItem: item => set({ editingItem: item }),
 
   upsertMenuItem: item =>
     set(state => {
@@ -122,5 +128,5 @@ export const useVendorStore = create<VendorState>(set => ({
     }),
 
   reset: () =>
-    set({ profile: null, activeOrders: [], pastOrders: [], items: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set() }),
+    set({ profile: null, activeOrders: [], pastOrders: [], items: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set(), editingItem: null }),
 }));

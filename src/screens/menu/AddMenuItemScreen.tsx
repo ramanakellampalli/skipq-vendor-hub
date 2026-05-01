@@ -14,9 +14,10 @@ import { X, Plus, ChevronDown } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../api';
 import { useVendorStore } from '../../store/vendorStore';
+import { MenuVariant } from '../../types';
+import { colors, radius, spacing } from '../../theme';
 
 const CATEGORIES = ['Mains', 'Beverages', 'Snacks', 'Breakfast', 'Desserts', 'Rice', 'Breads', 'Sides'];
-import { colors, radius, spacing } from '../../theme';
 
 interface DraftVariant {
   label: string;
@@ -24,15 +25,28 @@ interface DraftVariant {
 }
 
 export default function AddMenuItemScreen({ navigation }: any) {
+  const editingItem    = useVendorStore(s => s.editingItem);
+  const setEditingItem = useVendorStore(s => s.setEditingItem);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
+  const removeVariant  = useVendorStore(s => s.removeVariant);
+  const upsertVariant  = useVendorStore(s => s.upsertVariant);
 
-  const [name, setName]               = useState('');
-  const [description, setDescription] = useState('');
-  const [isVeg, setIsVeg]             = useState(true);
-  const [category, setCategory]       = useState('');
-  const [basePrice, setBasePrice]     = useState('');
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [variations, setVariations]   = useState<DraftVariant[]>([]);
+  const isEdit = editingItem !== null;
+
+  // For edit: separate existing (persisted) variants from newly added drafts
+  const [existingVariants, setExistingVariants] = useState<MenuVariant[]>(
+    editingItem?.variants ?? []
+  );
+
+  const [name, setName]               = useState(editingItem?.name ?? '');
+  const [description, setDescription] = useState(editingItem?.description ?? '');
+  const [isVeg, setIsVeg]             = useState(editingItem?.isVeg ?? true);
+  const [category, setCategory]       = useState(editingItem?.category ?? '');
+  const [basePrice, setBasePrice]     = useState(
+    editingItem?.variants[0]?.price.toString() ?? ''
+  );
+  const [isAvailable, setIsAvailable] = useState(editingItem?.isAvailable ?? true);
+  const [newVariations, setNewVariations] = useState<DraftVariant[]>([]);
 
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showVariantForm, setShowVariantForm]       = useState(false);
@@ -41,59 +55,99 @@ export default function AddMenuItemScreen({ navigation }: any) {
 
   const canSave = name.trim().length > 0 && basePrice.trim().length > 0 && !isNaN(parseFloat(basePrice));
 
+  const close = () => {
+    setEditingItem(null);
+    navigation.goBack();
+  };
+
   const save = useMutation({
     mutationFn: async () => {
-      const extraVariants = variations.map((v, i) => ({
-        label: v.label.trim() || undefined,
-        price: parseFloat(v.price),
-        displayOrder: i + 1,
-      }));
+      if (isEdit) {
+        // Update item fields
+        const itemRes = await api.menu.update(editingItem.id, {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          isVeg,
+          category: category || undefined,
+          isAvailable,
+        });
+        upsertMenuItem(itemRes.data);
 
-      const itemRes = await api.menu.create({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        isVeg,
-        category: category || undefined,
-        displayOrder: 0,
-        variants: [
-          { price: parseFloat(basePrice), displayOrder: 0 },
-          ...extraVariants,
-        ],
-      });
-      const item = itemRes.data;
-
-      if (!isAvailable) {
-        const updated = await api.menu.update(item.id, { isAvailable: false });
-        upsertMenuItem(updated.data);
+        // Add any new draft variants
+        for (const v of newVariations) {
+          const vRes = await api.variants.add(editingItem.id, {
+            label: v.label.trim() || undefined,
+            price: parseFloat(v.price),
+          });
+          upsertVariant(editingItem.id, vRes.data);
+        }
       } else {
-        upsertMenuItem(item);
+        // Create new item with all variants in one call
+        const extraVariants = newVariations.map((v, i) => ({
+          label: v.label.trim() || undefined,
+          price: parseFloat(v.price),
+          displayOrder: i + 1,
+        }));
+
+        const itemRes = await api.menu.create({
+          name: name.trim(),
+          description: description.trim() || undefined,
+          isVeg,
+          category: category || undefined,
+          displayOrder: 0,
+          variants: [
+            { price: parseFloat(basePrice), displayOrder: 0 },
+            ...extraVariants,
+          ],
+        });
+        const item = itemRes.data;
+
+        if (!isAvailable) {
+          const updated = await api.menu.update(item.id, { isAvailable: false });
+          upsertMenuItem(updated.data);
+        } else {
+          upsertMenuItem(item);
+        }
       }
     },
-    onSuccess: () => navigation.goBack(),
+    onSuccess: close,
     onError: (err: any) => Alert.alert('Error', err.response?.data?.message || 'Failed to save item'),
   });
 
   const commitVariant = () => {
     if (!variantPrice.trim() || isNaN(parseFloat(variantPrice))) return;
-    setVariations(vs => [...vs, { label: variantLabel.trim(), price: variantPrice.trim() }]);
+    setNewVariations(vs => [...vs, { label: variantLabel.trim(), price: variantPrice.trim() }]);
     setVariantLabel('');
     setVariantPrice('');
     setShowVariantForm(false);
   };
 
-  const removeVariant = (i: number) => setVariations(vs => vs.filter((_, j) => j !== i));
+  const removeNewVariant = (i: number) => setNewVariations(vs => vs.filter((_, j) => j !== i));
+
+  const deleteExistingVariant = (v: MenuVariant) => {
+    Alert.alert('Remove variant', `Remove "${v.label || `₹${v.price}`}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove', style: 'destructive', onPress: async () => {
+          await api.variants.delete(editingItem!.id, v.id);
+          removeVariant(editingItem!.id, v.id);
+          setExistingVariants(vs => vs.filter(ev => ev.id !== v.id));
+        },
+      },
+    ]);
+  };
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior="padding">
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.closeBtn} onPress={close} activeOpacity={0.7}>
           <X size={18} color={colors.navy} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>New menu item</Text>
-          <Text style={styles.headerSub}>DRAFT</Text>
+          <Text style={styles.headerTitle}>{isEdit ? 'Edit item' : 'New menu item'}</Text>
+          <Text style={styles.headerSub}>{isEdit ? 'EDITING' : 'DRAFT'}</Text>
         </View>
         <TouchableOpacity
           style={[styles.saveBtn, !canSave && styles.saveBtnOff]}
@@ -107,8 +161,6 @@ export default function AddMenuItemScreen({ navigation }: any) {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-
-
 
         {/* ── Item name ── */}
         <View style={styles.field}>
@@ -180,32 +232,48 @@ export default function AddMenuItemScreen({ navigation }: any) {
           />
         </View>
 
-        {/* ── Base price ── */}
-        <View style={styles.field}>
-          <Text style={styles.label}>BASE PRICE (₹) <Text style={styles.req}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            value={basePrice}
-            onChangeText={setBasePrice}
-            placeholder="₹0"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="decimal-pad"
-          />
-        </View>
+        {/* ── Base price (create only) ── */}
+        {!isEdit && (
+          <View style={styles.field}>
+            <Text style={styles.label}>BASE PRICE (₹) <Text style={styles.req}>*</Text></Text>
+            <TextInput
+              style={styles.input}
+              value={basePrice}
+              onChangeText={setBasePrice}
+              placeholder="₹0"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="decimal-pad"
+            />
+          </View>
+        )}
 
         {/* ── Variations ── */}
         <View style={styles.field}>
           <Text style={styles.label}>VARIATIONS · <Text style={styles.optional}>OPTIONAL</Text></Text>
           <View style={styles.variationsBox}>
-            {variations.length === 0 && !showVariantForm && (
+            {existingVariants.length === 0 && newVariations.length === 0 && !showVariantForm && (
               <Text style={styles.variationsHint}>Sizes, spice levels, add-ons</Text>
             )}
-            {variations.map((v, i) => (
-              <View key={i} style={styles.variantChip}>
+
+            {/* Existing persisted variants */}
+            {existingVariants.map(v => (
+              <View key={v.id} style={styles.variantChip}>
                 <Text style={styles.variantChipText}>
                   {v.label ? `${v.label} · ` : ''}₹{v.price}
                 </Text>
-                <TouchableOpacity onPress={() => removeVariant(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => deleteExistingVariant(v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <X size={13} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {/* New draft variants */}
+            {newVariations.map((v, i) => (
+              <View key={`new-${i}`} style={[styles.variantChip, styles.variantChipNew]}>
+                <Text style={styles.variantChipText}>
+                  {v.label ? `${v.label} · ` : ''}₹{v.price}
+                </Text>
+                <TouchableOpacity onPress={() => removeNewVariant(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <X size={13} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
@@ -250,8 +318,8 @@ export default function AddMenuItemScreen({ navigation }: any) {
         {/* ── Available toggle ── */}
         <View style={styles.toggleCard}>
           <View style={styles.toggleLeft}>
-            <Text style={styles.toggleTitle}>Available immediately</Text>
-            <Text style={styles.toggleSub}>Item appears in customer menu after save</Text>
+            <Text style={styles.toggleTitle}>Available</Text>
+            <Text style={styles.toggleSub}>Item appears in customer menu</Text>
           </View>
           <Switch
             value={isAvailable}
@@ -272,7 +340,6 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 48 },
 
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,29 +373,6 @@ const styles = StyleSheet.create({
   saveBtnText:     { fontSize: 14, fontWeight: '700', color: '#fff' },
   saveBtnTextOff:  { color: colors.textSecondary },
 
-  // Photo
-  photoBox: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    borderRadius: radius.md,
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-    gap: 6,
-    backgroundColor: colors.surface,
-  },
-  photoIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF3E0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoTitle: { fontSize: 15, fontWeight: '700', color: colors.navy },
-  photoHint:  { fontSize: 12, color: colors.textSecondary, textAlign: 'center', paddingHorizontal: spacing.lg },
-
-  // Fields
   field: { gap: 6 },
   label: { fontSize: 11, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.6 },
   req:   { color: colors.primary },
@@ -346,7 +390,6 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
 
-  // Name row with veg toggle
   nameRow:   { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   nameInput: { flex: 1 },
   vegToggle: {
@@ -360,7 +403,6 @@ const styles = StyleSheet.create({
   vegDot:  { width: 8, height: 8, borderRadius: 4 },
   vegText: { fontSize: 12, fontWeight: '700' },
 
-  // Category dropdown
   dropdown: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -375,7 +417,23 @@ const styles = StyleSheet.create({
   dropdownText:        { fontSize: 15, color: colors.textPrimary },
   dropdownPlaceholder: { color: colors.textSecondary },
 
-  // Variations box
+  catInline: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  catOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  catOptionText: { fontSize: 14, color: colors.textPrimary },
+  catOptionActive: { color: colors.primary, fontWeight: '700' },
+
   variationsBox: {
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -399,6 +457,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     alignSelf: 'flex-start',
   },
+  variantChipNew: { borderColor: colors.primary, borderStyle: 'dashed' },
   variantChipText: { fontSize: 13, color: colors.textPrimary, fontWeight: '500' },
 
   variantForm:    { gap: spacing.sm },
@@ -428,7 +487,6 @@ const styles = StyleSheet.create({
   },
   addVariationText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
-  // Available toggle
   toggleCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -442,22 +500,4 @@ const styles = StyleSheet.create({
   toggleLeft:  { flex: 1, marginRight: spacing.sm },
   toggleTitle: { fontSize: 15, fontWeight: '700', color: colors.navy },
   toggleSub:   { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-
-  // Inline category picker
-  catInline: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-  },
-  catOption: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  catOptionText: { fontSize: 14, color: colors.textPrimary },
-  catOptionActive: { color: colors.primary, fontWeight: '700' },
 });
