@@ -9,7 +9,6 @@ import {
   Switch,
   Alert,
   KeyboardAvoidingView,
-  Platform,
   Modal,
   FlatList,
 } from 'react-native';
@@ -87,7 +86,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const removeVariant = (i: number) => setVariations(vs => vs.filter((_, j) => j !== i));
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.root} behavior="padding">
 
       {/* ── Header ── */}
       <View style={styles.header}>
