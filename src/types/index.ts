@@ -41,20 +41,13 @@ export interface MenuVariant {
 
 export interface MenuItem {
   id: string;
-  categoryId?: string;
+  category?: string;
   name: string;
   description?: string;
   isVeg: boolean;
   isAvailable: boolean;
   displayOrder: number;
   variants: MenuVariant[];
-}
-
-export interface MenuCategory {
-  id: string;
-  name: string;
-  displayOrder: number;
-  items: MenuItem[];
 }
 
 export interface MonthlySummary {

@@ -17,6 +17,8 @@ import { X, Plus, ChevronDown, Camera } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../api';
 import { useVendorStore } from '../../store/vendorStore';
+
+const CATEGORIES = ['Mains', 'Beverages', 'Snacks', 'Breakfast', 'Desserts', 'Rice', 'Breads', 'Sides'];
 import { colors, radius, spacing } from '../../theme';
 
 interface DraftVariant {
@@ -25,14 +27,12 @@ interface DraftVariant {
 }
 
 export default function AddMenuItemScreen({ navigation }: any) {
-  const categories    = useVendorStore(s => s.categories);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
-  const upsertVariant  = useVendorStore(s => s.upsertVariant);
 
   const [name, setName]               = useState('');
   const [description, setDescription] = useState('');
   const [isVeg, setIsVeg]             = useState(true);
-  const [categoryId, setCategoryId]   = useState('');
+  const [category, setCategory]       = useState('');
   const [basePrice, setBasePrice]     = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [variations, setVariations]   = useState<DraftVariant[]>([]);
@@ -42,33 +42,34 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const [variantLabel, setVariantLabel]             = useState('');
   const [variantPrice, setVariantPrice]             = useState('');
 
-  const selectedCategory = categories.find(c => c.id === categoryId);
   const canSave = name.trim().length > 0 && basePrice.trim().length > 0 && !isNaN(parseFloat(basePrice));
 
   const save = useMutation({
     mutationFn: async () => {
+      const extraVariants = variations.map((v, i) => ({
+        label: v.label.trim() || undefined,
+        price: parseFloat(v.price),
+        displayOrder: i + 1,
+      }));
+
       const itemRes = await api.menu.create({
         name: name.trim(),
         description: description.trim() || undefined,
         isVeg,
-        categoryId: categoryId || undefined,
+        category: category || undefined,
+        displayOrder: 0,
+        variants: [
+          { price: parseFloat(basePrice), displayOrder: 0 },
+          ...extraVariants,
+        ],
       });
       const item = itemRes.data;
-      upsertMenuItem(item);
-
-      const baseVariant = await api.variants.add(item.id, { price: parseFloat(basePrice) });
-      upsertVariant(item.id, baseVariant.data);
-
-      for (const v of variations) {
-        const vRes = await api.variants.add(item.id, {
-          label: v.label.trim() || undefined,
-          price: parseFloat(v.price),
-        });
-        upsertVariant(item.id, vRes.data);
-      }
 
       if (!isAvailable) {
-        await api.menu.update(item.id, { isAvailable: false });
+        const updated = await api.menu.update(item.id, { isAvailable: false });
+        upsertMenuItem(updated.data);
+      } else {
+        upsertMenuItem(item);
       }
     },
     onSuccess: () => navigation.goBack(),
@@ -147,8 +148,8 @@ export default function AddMenuItemScreen({ navigation }: any) {
         <View style={styles.field}>
           <Text style={styles.label}>CATEGORY</Text>
           <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryPicker(true)} activeOpacity={0.7}>
-            <Text style={[styles.dropdownText, !selectedCategory && styles.dropdownPlaceholder]}>
-              {selectedCategory?.name ?? 'Choose category'}
+            <Text style={[styles.dropdownText, !category && styles.dropdownPlaceholder]}>
+              {category || 'Choose category'}
             </Text>
             <ChevronDown size={16} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -258,25 +259,22 @@ export default function AddMenuItemScreen({ navigation }: any) {
           <View style={styles.pickerSheet}>
             <Text style={styles.pickerTitle}>Choose category</Text>
             <FlatList
-              data={categories}
-              keyExtractor={c => c.id}
+              data={CATEGORIES}
+              keyExtractor={c => c}
               renderItem={({ item: cat }) => (
                 <TouchableOpacity
-                  style={[styles.pickerRow, categoryId === cat.id && styles.pickerRowActive]}
-                  onPress={() => { setCategoryId(cat.id); setShowCategoryPicker(false); }}
+                  style={[styles.pickerRow, category === cat && styles.pickerRowActive]}
+                  onPress={() => { setCategory(cat); setShowCategoryPicker(false); }}
                   activeOpacity={0.7}>
-                  <Text style={[styles.pickerRowText, categoryId === cat.id && styles.pickerRowTextActive]}>
-                    {cat.name}
+                  <Text style={[styles.pickerRowText, category === cat && styles.pickerRowTextActive]}>
+                    {cat}
                   </Text>
-                  {categoryId === cat.id && <View style={styles.pickerCheck} />}
+                  {category === cat && <View style={styles.pickerCheck} />}
                 </TouchableOpacity>
               )}
-              ListEmptyComponent={
-                <Text style={styles.pickerEmpty}>No categories yet. Add one from the Menu screen.</Text>
-              }
               ListFooterComponent={
-                categoryId ? (
-                  <TouchableOpacity style={styles.clearCategory} onPress={() => { setCategoryId(''); setShowCategoryPicker(false); }}>
+                category ? (
+                  <TouchableOpacity style={styles.clearCategory} onPress={() => { setCategory(''); setShowCategoryPicker(false); }}>
                     <Text style={styles.clearCategoryText}>Clear selection</Text>
                   </TouchableOpacity>
                 ) : null

@@ -1,12 +1,11 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, MenuCategory, MenuVariant, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
+import { Order, OrderStatus, MenuItem, MenuVariant, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
 
 export interface SyncResponse {
   profile: VendorProfile;
   activeOrders: Order[];
   pastOrders: Order[];
-  categories: MenuCategory[];
-  uncategorized: MenuItem[];
+  items: MenuItem[];
   serviceRequests: ServiceRequest[];
 }
 
@@ -60,23 +59,26 @@ export const api = {
   menu: {
     getAll: () =>
       client.get<MenuItem[]>('/api/v1/vendor/menu'),
-    create: (data: { name: string; description?: string; isVeg: boolean; categoryId?: string; displayOrder?: number }) =>
+    create: (data: {
+      name: string;
+      description?: string;
+      isVeg: boolean;
+      category?: string;
+      displayOrder?: number;
+      variants: { label?: string; price: number; displayOrder?: number }[];
+    }) =>
       client.post<MenuItem>('/api/v1/vendor/menu', data),
-    update: (id: string, data: { name?: string; description?: string; isVeg?: boolean; isAvailable?: boolean; categoryId?: string; displayOrder?: number }) =>
+    update: (id: string, data: {
+      name?: string;
+      description?: string;
+      isVeg?: boolean;
+      isAvailable?: boolean;
+      category?: string;
+      displayOrder?: number;
+    }) =>
       client.patch<MenuItem>(`/api/v1/vendor/menu/${id}`, data),
     delete: (id: string) =>
       client.delete(`/api/v1/vendor/menu/${id}`),
-  },
-
-  categories: {
-    getAll: () =>
-      client.get<MenuCategory[]>('/api/v1/vendor/menu/categories'),
-    create: (data: { name: string; displayOrder?: number }) =>
-      client.post<MenuCategory>('/api/v1/vendor/menu/categories', data),
-    update: (id: string, data: { name?: string; displayOrder?: number }) =>
-      client.patch<MenuCategory>(`/api/v1/vendor/menu/categories/${id}`, data),
-    delete: (id: string) =>
-      client.delete(`/api/v1/vendor/menu/categories/${id}`),
   },
 
   variants: {

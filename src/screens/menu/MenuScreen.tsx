@@ -16,59 +16,55 @@ import { useMutation } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Leaf } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
-import { MenuItem, MenuCategory, MenuVariant } from '../../types';
+import { MenuItem, MenuVariant } from '../../types';
 import { useVendorStore } from '../../store/vendorStore';
 
-// ─── Item modal ──────────────────────────────────────────────────────────────
+const CATEGORIES = ['Mains', 'Beverages', 'Snacks', 'Breakfast', 'Desserts', 'Rice', 'Breads', 'Sides'];
+
+// ─── Edit item modal ──────────────────────────────────────────────────────────
 
 interface ItemModalProps {
   visible: boolean;
   editing: MenuItem | null;
-  categories: MenuCategory[];
   onClose: () => void;
   onSaved: (item: MenuItem) => void;
 }
 
-function ItemModal({ visible, editing, categories, onClose, onSaved }: ItemModalProps) {
-  const [name, setName] = useState(editing?.name ?? '');
+function ItemModal({ visible, editing, onClose, onSaved }: ItemModalProps) {
+  const [name, setName]               = useState(editing?.name ?? '');
   const [description, setDescription] = useState(editing?.description ?? '');
-  const [isVeg, setIsVeg] = useState(editing?.isVeg ?? true);
-  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '');
+  const [isVeg, setIsVeg]             = useState(editing?.isVeg ?? true);
+  const [category, setCategory]       = useState(editing?.category ?? '');
+  const [showCatPicker, setShowCatPicker] = useState(false);
 
   React.useEffect(() => {
     setName(editing?.name ?? '');
     setDescription(editing?.description ?? '');
     setIsVeg(editing?.isVeg ?? true);
-    setCategoryId(editing?.categoryId ?? '');
+    setCategory(editing?.category ?? '');
   }, [editing, visible]);
-
-  const createItem = useMutation({
-    mutationFn: () =>
-      api.menu.create({ name, description: description || undefined, isVeg, categoryId: categoryId || undefined }),
-    onSuccess: res => { onSaved(res.data); onClose(); },
-  });
 
   const updateItem = useMutation({
     mutationFn: () =>
-      api.menu.update(editing!.id, { name, description: description || undefined, isVeg, categoryId: categoryId || undefined }),
+      api.menu.update(editing!.id, {
+        name,
+        description: description || undefined,
+        isVeg,
+        category: category || undefined,
+      }),
     onSuccess: res => { onSaved(res.data); onClose(); },
   });
 
   const handleSave = () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Item name is required');
-      return;
-    }
-    editing ? updateItem.mutate() : createItem.mutate();
+    if (!name.trim()) { Alert.alert('Error', 'Item name is required'); return; }
+    updateItem.mutate();
   };
-
-  const busy = createItem.isPending || updateItem.isPending;
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{editing ? 'Edit Item' : 'Add Menu Item'}</Text>
+          <Text style={styles.modalTitle}>Edit Item</Text>
 
           <Text style={styles.label}>Name</Text>
           <TextInput
@@ -100,33 +96,36 @@ function ItemModal({ visible, editing, categories, onClose, onSaved }: ItemModal
             />
           </View>
 
-          {categories.length > 0 && (
-            <>
-              <Text style={styles.label}>Category (optional)</Text>
-              <View style={styles.chipRow}>
-                <TouchableOpacity
-                  style={[styles.chip, !categoryId && styles.chipActive]}
-                  onPress={() => setCategoryId('')}>
-                  <Text style={[styles.chipText, !categoryId && styles.chipTextActive]}>None</Text>
+          <Text style={styles.label}>Category (optional)</Text>
+          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCatPicker(v => !v)}>
+            <Text style={[styles.dropdownText, !category && styles.dropdownPlaceholder]}>
+              {category || 'Choose category'}
+            </Text>
+            <ChevronDown size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          {showCatPicker && (
+            <View style={styles.catPickerInline}>
+              <TouchableOpacity style={styles.catOption} onPress={() => { setCategory(''); setShowCatPicker(false); }}>
+                <Text style={[styles.catOptionText, !category && styles.catOptionActive]}>None</Text>
+              </TouchableOpacity>
+              {CATEGORIES.map(c => (
+                <TouchableOpacity key={c} style={styles.catOption} onPress={() => { setCategory(c); setShowCatPicker(false); }}>
+                  <Text style={[styles.catOptionText, category === c && styles.catOptionActive]}>{c}</Text>
                 </TouchableOpacity>
-                {categories.map(c => (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[styles.chip, categoryId === c.id && styles.chipActive]}
-                    onPress={() => setCategoryId(c.id)}>
-                    <Text style={[styles.chipText, categoryId === c.id && styles.chipTextActive]}>{c.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
+              ))}
+            </View>
           )}
 
           <View style={styles.modalActions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.saveBtn, busy && styles.saveBtnBusy]} onPress={handleSave} disabled={busy}>
-              <Text style={styles.saveText}>{editing ? 'Save' : 'Add Item'}</Text>
+            <TouchableOpacity
+              style={[styles.saveBtn, updateItem.isPending && styles.saveBtnBusy]}
+              onPress={handleSave}
+              disabled={updateItem.isPending}>
+              <Text style={styles.saveText}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -167,10 +166,7 @@ function VariantModal({ visible, itemId, editing, onClose, onSaved }: VariantMod
   });
 
   const handleSave = () => {
-    if (!price || isNaN(parseFloat(price))) {
-      Alert.alert('Error', 'Enter a valid price');
-      return;
-    }
+    if (!price || isNaN(parseFloat(price))) { Alert.alert('Error', 'Enter a valid price'); return; }
     editing ? updateVariant.mutate() : addVariant.mutate();
   };
 
@@ -206,64 +202,6 @@ function VariantModal({ visible, itemId, editing, onClose, onSaved }: VariantMod
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.saveBtn, busy && styles.saveBtnBusy]} onPress={handleSave} disabled={busy}>
-              <Text style={styles.saveText}>{editing ? 'Save' : 'Add'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
-// ─── Category modal ───────────────────────────────────────────────────────────
-
-interface CategoryModalProps {
-  visible: boolean;
-  editing: MenuCategory | null;
-  onClose: () => void;
-  onSaved: (c: MenuCategory) => void;
-}
-
-function CategoryModal({ visible, editing, onClose, onSaved }: CategoryModalProps) {
-  const [name, setName] = useState(editing?.name ?? '');
-
-  React.useEffect(() => {
-    setName(editing?.name ?? '');
-  }, [editing, visible]);
-
-  const createCat = useMutation({
-    mutationFn: () => api.categories.create({ name }),
-    onSuccess: res => { onSaved(res.data); onClose(); },
-  });
-
-  const updateCat = useMutation({
-    mutationFn: () => api.categories.update(editing!.id, { name }),
-    onSuccess: res => { onSaved(res.data); onClose(); },
-  });
-
-  const handleSave = () => {
-    if (!name.trim()) return;
-    editing ? updateCat.mutate() : createCat.mutate();
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{editing ? 'Edit Category' : 'Add Category'}</Text>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g. Starters, Mains, Beverages"
-            placeholderTextColor={colors.textSecondary}
-          />
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
               <Text style={styles.saveText}>{editing ? 'Save' : 'Add'}</Text>
             </TouchableOpacity>
           </View>
@@ -362,9 +300,8 @@ function ItemCard({
 // ─── Category section ─────────────────────────────────────────────────────────
 
 interface CategorySectionProps {
-  category: MenuCategory;
-  onEditCategory: () => void;
-  onDeleteCategory: () => void;
+  title: string;
+  items: MenuItem[];
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (item: MenuItem) => void;
   onAddVariant: (item: MenuItem) => void;
@@ -375,9 +312,8 @@ interface CategorySectionProps {
 }
 
 function CategorySection({
-  category,
-  onEditCategory,
-  onDeleteCategory,
+  title,
+  items,
   onEditItem,
   onDeleteItem,
   onAddVariant,
@@ -390,74 +326,12 @@ function CategorySection({
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <TouchableOpacity style={styles.sectionHeaderLeft} onPress={() => setCollapsed(v => !v)}>
-          {collapsed
-            ? <ChevronRight size={16} color={colors.textSecondary} />
-            : <ChevronDown size={16} color={colors.textSecondary} />}
-          <Text style={styles.sectionTitle}>{category.name}</Text>
-          <Text style={styles.sectionCount}>{category.items.length}</Text>
-        </TouchableOpacity>
-        <View style={styles.sectionActions}>
-          <TouchableOpacity onPress={onEditCategory} style={styles.iconBtn}>
-            <Pencil size={14} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onDeleteCategory} style={styles.iconBtn}>
-            <Trash2 size={14} color={colors.error} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {!collapsed && category.items.map(item => (
-        <ItemCard
-          key={item.id}
-          item={item}
-          onEdit={() => onEditItem(item)}
-          onDelete={() => onDeleteItem(item)}
-          onAddVariant={() => onAddVariant(item)}
-          onEditVariant={v => onEditVariant(item, v)}
-          onDeleteVariant={v => onDeleteVariant(item, v)}
-          onToggleAvailable={val => onToggleItemAvailable(item, val)}
-          onToggleVariantAvailable={(v, val) => onToggleVariantAvailable(item, v, val)}
-        />
-      ))}
-    </View>
-  );
-}
-
-// ─── Uncategorized section ────────────────────────────────────────────────────
-
-interface UncategorizedSectionProps {
-  items: MenuItem[];
-  onEditItem: (item: MenuItem) => void;
-  onDeleteItem: (item: MenuItem) => void;
-  onAddVariant: (item: MenuItem) => void;
-  onEditVariant: (item: MenuItem, v: MenuVariant) => void;
-  onDeleteVariant: (item: MenuItem, v: MenuVariant) => void;
-  onToggleItemAvailable: (item: MenuItem, val: boolean) => void;
-  onToggleVariantAvailable: (item: MenuItem, v: MenuVariant, val: boolean) => void;
-}
-
-function UncategorizedSection({
-  items,
-  onEditItem,
-  onDeleteItem,
-  onAddVariant,
-  onEditVariant,
-  onDeleteVariant,
-  onToggleItemAvailable,
-  onToggleVariantAvailable,
-}: UncategorizedSectionProps) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  return (
-    <View style={styles.section}>
       <TouchableOpacity style={styles.sectionHeader} onPress={() => setCollapsed(v => !v)}>
         <View style={styles.sectionHeaderLeft}>
           {collapsed
             ? <ChevronRight size={16} color={colors.textSecondary} />
             : <ChevronDown size={16} color={colors.textSecondary} />}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Uncategorized</Text>
+          <Text style={styles.sectionTitle}>{title}</Text>
           <Text style={styles.sectionCount}>{items.length}</Text>
         </View>
       </TouchableOpacity>
@@ -482,20 +356,26 @@ function UncategorizedSection({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function MenuScreen({ navigation }: any) {
-  const categories = useVendorStore(s => s.categories);
-  const uncategorized = useVendorStore(s => s.uncategorized);
-  const upsertCategory = useVendorStore(s => s.upsertCategory);
-  const removeCategory = useVendorStore(s => s.removeCategory);
+  const items          = useVendorStore(s => s.items);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
   const removeMenuItem = useVendorStore(s => s.removeMenuItem);
-  const upsertVariant = useVendorStore(s => s.upsertVariant);
-  const removeVariant = useVendorStore(s => s.removeVariant);
+  const upsertVariant  = useVendorStore(s => s.upsertVariant);
+  const removeVariant  = useVendorStore(s => s.removeVariant);
 
-  const [itemModal, setItemModal] = useState<{ visible: boolean; editing: MenuItem | null }>({ visible: false, editing: null });
+  const [itemModal, setItemModal]       = useState<{ visible: boolean; editing: MenuItem | null }>({ visible: false, editing: null });
   const [variantModal, setVariantModal] = useState<{ visible: boolean; itemId: string; editing: MenuVariant | null }>({ visible: false, itemId: '', editing: null });
-  const [categoryModal, setCategoryModal] = useState<{ visible: boolean; editing: MenuCategory | null }>({ visible: false, editing: null });
 
-  const totalItems = categories.reduce((s, c) => s + c.items.length, 0) + uncategorized.length;
+  // Group items by category string; items without a category go into "Other"
+  const grouped = React.useMemo(() => {
+    const map = new Map<string, MenuItem[]>();
+    for (const item of items) {
+      const key = item.category || 'Other';
+      const group = map.get(key) ?? [];
+      group.push(item);
+      map.set(key, group);
+    }
+    return map;
+  }, [items]);
 
   const updateItemAvailability = useMutation({
     mutationFn: ({ id, val }: { id: string; val: boolean }) => api.menu.update(id, { isAvailable: val }),
@@ -519,11 +399,6 @@ export default function MenuScreen({ navigation }: any) {
     onSuccess: (_, vars) => removeVariant(vars.itemId, vars.variantId),
   });
 
-  const deleteCategoryMutation = useMutation({
-    mutationFn: (id: string) => api.categories.delete(id),
-    onSuccess: (_, id) => removeCategory(id),
-  });
-
   const confirmDeleteItem = (item: MenuItem) => {
     Alert.alert('Delete Item', `Remove "${item.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -538,34 +413,21 @@ export default function MenuScreen({ navigation }: any) {
     ]);
   };
 
-  const confirmDeleteCategory = (cat: MenuCategory) => {
-    Alert.alert('Delete Category', `Remove "${cat.name}"? Items will become uncategorized.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteCategoryMutation.mutate(cat.id) },
-    ]);
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Menu</Text>
-          <Text style={styles.headerSub}>{totalItems} items · {categories.length} categories</Text>
+          <Text style={styles.headerSub}>{items.length} items</Text>
         </View>
-        <TouchableOpacity
-          style={styles.addCatBtn}
-          onPress={() => setCategoryModal({ visible: true, editing: null })}>
-          <Text style={styles.addCatText}>+ Category</Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {categories.map(cat => (
+        {[...grouped.entries()].map(([title, groupItems]) => (
           <CategorySection
-            key={cat.id}
-            category={cat}
-            onEditCategory={() => setCategoryModal({ visible: true, editing: cat })}
-            onDeleteCategory={() => confirmDeleteCategory(cat)}
+            key={title}
+            title={title}
+            items={groupItems}
             onEditItem={item => setItemModal({ visible: true, editing: item })}
             onDeleteItem={confirmDeleteItem}
             onAddVariant={item => setVariantModal({ visible: true, itemId: item.id, editing: null })}
@@ -576,20 +438,7 @@ export default function MenuScreen({ navigation }: any) {
           />
         ))}
 
-        {uncategorized.length > 0 && (
-          <UncategorizedSection
-            items={uncategorized}
-            onEditItem={item => setItemModal({ visible: true, editing: item })}
-            onDeleteItem={confirmDeleteItem}
-            onAddVariant={item => setVariantModal({ visible: true, itemId: item.id, editing: null })}
-            onEditVariant={(item, v) => setVariantModal({ visible: true, itemId: item.id, editing: v })}
-            onDeleteVariant={confirmDeleteVariant}
-            onToggleItemAvailable={(item, val) => updateItemAvailability.mutate({ id: item.id, val })}
-            onToggleVariantAvailable={(item, v, val) => updateVariantAvailability.mutate({ itemId: item.id, variantId: v.id, val })}
-          />
-        )}
-
-        {totalItems === 0 && (
+        {items.length === 0 && (
           <View style={styles.emptyState}>
             <Leaf size={40} color={colors.border} />
             <Text style={styles.emptyText}>No menu items yet</Text>
@@ -605,7 +454,6 @@ export default function MenuScreen({ navigation }: any) {
       <ItemModal
         visible={itemModal.visible}
         editing={itemModal.editing}
-        categories={categories}
         onClose={() => setItemModal({ visible: false, editing: null })}
         onSaved={upsertMenuItem}
       />
@@ -616,13 +464,6 @@ export default function MenuScreen({ navigation }: any) {
         editing={variantModal.editing}
         onClose={() => setVariantModal({ visible: false, itemId: '', editing: null })}
         onSaved={v => upsertVariant(variantModal.itemId, v)}
-      />
-
-      <CategoryModal
-        visible={categoryModal.visible}
-        editing={categoryModal.editing}
-        onClose={() => setCategoryModal({ visible: false, editing: null })}
-        onSaved={upsertCategory}
       />
     </View>
   );
@@ -645,14 +486,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
   headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  addCatBtn: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-  },
-  addCatText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   scrollContent: { padding: spacing.md, gap: spacing.md, paddingBottom: 100 },
 
   section: {
@@ -681,7 +514,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 10,
   },
-  sectionActions: { flexDirection: 'row', gap: 4 },
 
   itemCard: {
     padding: spacing.md,
@@ -695,18 +527,14 @@ const styles = StyleSheet.create({
   },
   itemLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, flex: 1 },
   vegDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
+  itemFlex: { flex: 1 },
   itemName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
   itemDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   itemPrice: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
   itemActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   iconBtn: { padding: 4 },
 
-  variantRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: spacing.sm,
-  },
+  variantRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   variantPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -721,6 +549,8 @@ const styles = StyleSheet.create({
   variantPillOff: { opacity: 0.45 },
   variantLabel: { fontSize: 12, color: colors.textPrimary },
   variantLabelOff: { textDecorationLine: 'line-through', color: colors.textSecondary },
+  variantEditBtn: { paddingLeft: 4 },
+  variantDeleteBtn: { paddingLeft: 2 },
   addVariantBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -777,17 +607,34 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 72, textAlignVertical: 'top' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
+  dropdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    backgroundColor: colors.background,
   },
-  chipActive: { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
-  chipText: { fontSize: 13, color: colors.textSecondary },
-  chipTextActive: { color: colors.primary, fontWeight: '600' },
+  dropdownText: { fontSize: 15, color: colors.textPrimary },
+  dropdownPlaceholder: { color: colors.textSecondary },
+  catPickerInline: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.background,
+  },
+  catOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  catOptionText: { fontSize: 14, color: colors.textPrimary },
+  catOptionActive: { color: colors.primary, fontWeight: '700' },
   modalActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   cancelBtn: {
     flex: 1,
@@ -807,7 +654,4 @@ const styles = StyleSheet.create({
   },
   saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   saveBtnBusy: { opacity: 0.6 },
-  itemFlex: { flex: 1 },
-  variantEditBtn: { paddingLeft: 4 },
-  variantDeleteBtn: { paddingLeft: 2 },
 });
