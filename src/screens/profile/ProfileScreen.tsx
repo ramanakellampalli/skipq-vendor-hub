@@ -253,6 +253,14 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Activity</Text>
+        <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('History')} activeOpacity={0.7}>
+          <Text style={styles.rowLabel}>Order History</Text>
+          <ChevronRight size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Help</Text>
         <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Support')} activeOpacity={0.7}>
           <Text style={styles.rowLabel}>Contact Support</Text>
