@@ -13,7 +13,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { X, Plus, ChevronDown, Camera } from 'lucide-react-native';
+import { X, Plus, ChevronDown } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../api';
 import { useVendorStore } from '../../store/vendorStore';
@@ -111,14 +111,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {/* ── Photo placeholder ── */}
-        <View style={styles.photoBox}>
-          <View style={styles.photoIcon}>
-            <Camera size={22} color={colors.textSecondary} />
-          </View>
-          <Text style={styles.photoTitle}>Add a photo</Text>
-          <Text style={styles.photoHint}>Customers order 3× more from items with photos</Text>
-        </View>
+
 
         {/* ── Item name ── */}
         <View style={styles.field}>
@@ -402,7 +395,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderStyle: 'dashed',
     borderRadius: radius.md,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
     backgroundColor: colors.surface,
     gap: spacing.sm,
   },
