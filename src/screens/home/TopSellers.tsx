@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingTop: spacing.md,
-    paddingHorizontal: spacing.md,
     paddingBottom: 0,
     overflow: 'hidden',
   },
@@ -75,6 +74,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   rank: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, width: 20 },
   imagePlaceholder: {
@@ -88,6 +88,6 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '600', color: colors.navy, flex: 1, marginRight: 8 },
   revenue: { fontSize: 15, fontWeight: '700', color: colors.navy },
   sold: { fontSize: 12, color: colors.primary, fontWeight: '600', marginTop: 2 },
-  barBg: { height: 3, backgroundColor: colors.border },
+  barBg: { height: 3, backgroundColor: colors.border, marginLeft: 40 },
   barFill: { height: 3, backgroundColor: colors.primary },
 });
