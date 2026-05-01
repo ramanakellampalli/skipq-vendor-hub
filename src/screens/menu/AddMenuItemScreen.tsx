@@ -9,8 +9,6 @@ import {
   Switch,
   Alert,
   KeyboardAvoidingView,
-  Modal,
-  FlatList,
 } from 'react-native';
 import { X, Plus, ChevronDown } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
@@ -139,12 +137,32 @@ export default function AddMenuItemScreen({ navigation }: any) {
         {/* ── Category ── */}
         <View style={styles.field}>
           <Text style={styles.label}>CATEGORY</Text>
-          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryPicker(true)} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => setShowCategoryPicker(v => !v)}
+            activeOpacity={0.7}>
             <Text style={[styles.dropdownText, !category && styles.dropdownPlaceholder]}>
               {category || 'Choose category'}
             </Text>
             <ChevronDown size={16} color={colors.textSecondary} />
           </TouchableOpacity>
+          {showCategoryPicker && (
+            <View style={styles.catInline}>
+              <TouchableOpacity
+                style={styles.catOption}
+                onPress={() => { setCategory(''); setShowCategoryPicker(false); }}>
+                <Text style={[styles.catOptionText, !category && styles.catOptionActive]}>None</Text>
+              </TouchableOpacity>
+              {CATEGORIES.map(c => (
+                <TouchableOpacity
+                  key={c}
+                  style={styles.catOption}
+                  onPress={() => { setCategory(c); setShowCategoryPicker(false); }}>
+                  <Text style={[styles.catOptionText, category === c && styles.catOptionActive]}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* ── Description ── */}
@@ -244,37 +262,6 @@ export default function AddMenuItemScreen({ navigation }: any) {
         </View>
 
       </ScrollView>
-
-      {/* ── Category picker modal ── */}
-      <Modal visible={showCategoryPicker} transparent animationType="slide">
-        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowCategoryPicker(false)}>
-          <View style={styles.pickerSheet}>
-            <Text style={styles.pickerTitle}>Choose category</Text>
-            <FlatList
-              data={CATEGORIES}
-              keyExtractor={c => c}
-              renderItem={({ item: cat }) => (
-                <TouchableOpacity
-                  style={[styles.pickerRow, category === cat && styles.pickerRowActive]}
-                  onPress={() => { setCategory(cat); setShowCategoryPicker(false); }}
-                  activeOpacity={0.7}>
-                  <Text style={[styles.pickerRowText, category === cat && styles.pickerRowTextActive]}>
-                    {cat}
-                  </Text>
-                  {category === cat && <View style={styles.pickerCheck} />}
-                </TouchableOpacity>
-              )}
-              ListFooterComponent={
-                category ? (
-                  <TouchableOpacity style={styles.clearCategory} onPress={() => { setCategory(''); setShowCategoryPicker(false); }}>
-                    <Text style={styles.clearCategoryText}>Clear selection</Text>
-                  </TouchableOpacity>
-                ) : null
-              }
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
     </KeyboardAvoidingView>
   );
@@ -456,31 +443,21 @@ const styles = StyleSheet.create({
   toggleTitle: { fontSize: 15, fontWeight: '700', color: colors.navy },
   toggleSub:   { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
-  // Category picker
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  pickerSheet: {
+  // Inline category picker
+  catInline: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.lg,
-    maxHeight: '60%',
+    overflow: 'hidden',
   },
-  pickerTitle:   { fontSize: 16, fontWeight: '700', color: colors.navy, marginBottom: spacing.md },
-  pickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+  catOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  pickerRowActive:    { },
-  pickerRowText:      { fontSize: 15, color: colors.textPrimary },
-  pickerRowTextActive:{ color: colors.primary, fontWeight: '700' },
-  pickerCheck: {
-    width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary,
-  },
-  pickerEmpty:      { fontSize: 14, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.lg },
-  clearCategory:    { paddingVertical: 14, alignItems: 'center' },
-  clearCategoryText:{ fontSize: 14, color: colors.textSecondary },
+  catOptionText: { fontSize: 14, color: colors.textPrimary },
+  catOptionActive: { color: colors.primary, fontWeight: '700' },
 });
