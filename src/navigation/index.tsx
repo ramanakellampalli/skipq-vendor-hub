@@ -23,6 +23,7 @@ import HomeScreen from '../screens/home/HomeScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import MenuScreen from '../screens/menu/MenuScreen';
+import AddMenuItemScreen from '../screens/menu/AddMenuItemScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SupportScreen from '../screens/profile/SupportScreen';
 import NewSupportRequestScreen from '../screens/profile/NewSupportRequestScreen';
@@ -40,6 +41,7 @@ const IconMenu    = ({ color }: { color: string }) => <UtensilsCrossed size={22}
 const IconProfile = ({ color }: { color: string }) => <Store size={22} color={color} />;
 const HomeStack     = createStackNavigator();
 const ProfileStack  = createStackNavigator();
+const MenuStack     = createStackNavigator();
 
 function AuthNavigator() {
   return (
@@ -67,6 +69,15 @@ function OrdersNavigator() {
       <Stack.Screen name="OrdersList" component={OrdersScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
     </Stack.Navigator>
+  );
+}
+
+function MenuNavigator() {
+  return (
+    <MenuStack.Navigator screenOptions={{ headerShown: false }}>
+      <MenuStack.Screen name="MenuMain" component={MenuScreen} />
+      <MenuStack.Screen name="AddMenuItem" component={AddMenuItemScreen} />
+    </MenuStack.Navigator>
   );
 }
 
@@ -107,7 +118,7 @@ function MainNavigator() {
           tabBarBadgeStyle: { backgroundColor: colors.error, fontSize: 11 },
         }}
       />
-      <Tab.Screen name="Menu" component={MenuScreen} options={{ tabBarIcon: IconMenu }} />
+      <Tab.Screen name="Menu" component={MenuNavigator} options={{ tabBarIcon: IconMenu }} />
       <Tab.Screen name="Profile" component={ProfileNavigator} options={{ tabBarIcon: IconProfile }} />
     </Tab.Navigator>
   );

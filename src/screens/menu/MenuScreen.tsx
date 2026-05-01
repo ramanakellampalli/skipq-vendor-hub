@@ -481,7 +481,7 @@ function UncategorizedSection({
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
-export default function MenuScreen() {
+export default function MenuScreen({ navigation }: any) {
   const categories = useVendorStore(s => s.categories);
   const uncategorized = useVendorStore(s => s.uncategorized);
   const upsertCategory = useVendorStore(s => s.upsertCategory);
@@ -598,7 +598,7 @@ export default function MenuScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={() => setItemModal({ visible: true, editing: null })}>
+      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AddMenuItem')}>
         <Plus size={24} color="#fff" />
       </TouchableOpacity>
 
