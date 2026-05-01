@@ -5,23 +5,16 @@ import { TopSeller } from '../../utils/orderStats';
 
 interface Props {
   sellers: TopSeller[];
-  totalRevenue: number;
-  totalItems: number;
   onManageMenu: () => void;
 }
 
-export default function TopSellers({ sellers, totalRevenue, totalItems, onManageMenu }: Props) {
+export default function TopSellers({ sellers, onManageMenu }: Props) {
   const maxQty = sellers[0]?.quantity ?? 1;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Today's top sellers</Text>
-          <Text style={styles.sub}>
-            {totalItems} items · ₹{totalRevenue.toFixed(0)} gross
-          </Text>
-        </View>
+        <Text style={styles.title}>Top sellers</Text>
         <TouchableOpacity onPress={onManageMenu} activeOpacity={0.7}>
           <Text style={styles.manageText}>Manage menu</Text>
         </TouchableOpacity>
@@ -29,7 +22,7 @@ export default function TopSellers({ sellers, totalRevenue, totalItems, onManage
 
       {sellers.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No sales yet today</Text>
+          <Text style={styles.emptyText}>No sales yet</Text>
         </View>
       ) : (
         sellers.map((seller, i) => (
@@ -60,8 +53,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   title: { fontSize: 17, fontWeight: '700', color: colors.navy },
-  sub: { fontSize: 12, color: colors.textSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.4 },
-  manageText: { fontSize: 13, fontWeight: '600', color: colors.primary },
+manageText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   empty: { paddingVertical: spacing.lg, alignItems: 'center' },
   emptyText: { fontSize: 14, color: colors.textSecondary },
   row: {

@@ -27,13 +27,8 @@ export default function HomeScreen({ navigation }: any) {
 
   const completedToday = useMemo(() => getTodayCompletedOrders(pastOrders), [pastOrders]);
   const revenue        = useMemo(() => getTodayRevenue(completedToday), [completedToday]);
-  const topSellers     = useMemo(() => getTopSellers(completedToday), [completedToday]);
+  const topSellers     = useMemo(() => getTopSellers(pastOrders.filter(o => o.state.orderStatus === 'COMPLETED')), [pastOrders]);
   const queueCounts    = useMemo(() => getQueueCounts(activeOrders), [activeOrders]);
-
-  const totalItemsSold = useMemo(
-    () => completedToday.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0),
-    [completedToday],
-  );
 
   const toggleOpen = useMutation({
     mutationFn: (isOpen: boolean) => api.vendor.updateProfile({ isOpen }),
@@ -97,8 +92,6 @@ export default function HomeScreen({ navigation }: any) {
         {/* Top sellers */}
         <TopSellers
           sellers={topSellers}
-          totalRevenue={revenue}
-          totalItems={totalItemsSold}
           onManageMenu={() => navigation.navigate('Menu')}
         />
 
