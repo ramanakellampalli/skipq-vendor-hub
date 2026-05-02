@@ -28,12 +28,9 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const editingItem    = useVendorStore(s => s.editingItem);
   const setEditingItem = useVendorStore(s => s.setEditingItem);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
-  const removeVariant  = useVendorStore(s => s.removeVariant);
-  const upsertVariant  = useVendorStore(s => s.upsertVariant);
 
   const isEdit = editingItem !== null;
 
-  // For edit: separate existing (persisted) variants from newly added drafts
   const [existingVariants, setExistingVariants] = useState<MenuVariant[]>(
     editingItem?.variants ?? []
   );
@@ -42,9 +39,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const [description, setDescription] = useState(editingItem?.description ?? '');
   const [isVeg, setIsVeg]             = useState(editingItem?.isVeg ?? true);
   const [category, setCategory]       = useState(editingItem?.category ?? '');
-  const [basePrice, setBasePrice]     = useState(
-    editingItem?.variants[0]?.price.toString() ?? ''
-  );
+  const [basePrice, setBasePrice]     = useState(editingItem?.price?.toString() ?? '');
   const [isAvailable, setIsAvailable] = useState(editingItem?.isAvailable ?? true);
   const [newVariations, setNewVariations] = useState<DraftVariant[]>([]);
 
@@ -62,46 +57,37 @@ export default function AddMenuItemScreen({ navigation }: any) {
 
   const save = useMutation({
     mutationFn: async () => {
+      const allVariants = [
+        ...existingVariants.map((v, i) => ({ label: v.label, price: v.price, displayOrder: i })),
+        ...newVariations.map((v, i) => ({
+          label: v.label.trim() || undefined,
+          price: parseFloat(v.price),
+          displayOrder: existingVariants.length + i,
+        })),
+      ];
+
       if (isEdit) {
-        // Update item fields
-        const itemRes = await api.menu.update(editingItem.id, {
+        const res = await api.menu.update(editingItem.id, {
           name: name.trim(),
           description: description.trim() || undefined,
           isVeg,
           category: category || undefined,
           isAvailable,
+          price: parseFloat(basePrice),
+          variants: allVariants,
         });
-        upsertMenuItem(itemRes.data);
-
-        // Add any new draft variants
-        for (const v of newVariations) {
-          const vRes = await api.variants.add(editingItem.id, {
-            label: v.label.trim() || undefined,
-            price: parseFloat(v.price),
-          });
-          upsertVariant(editingItem.id, vRes.data);
-        }
+        upsertMenuItem(res.data);
       } else {
-        // Create new item with all variants in one call
-        const extraVariants = newVariations.map((v, i) => ({
-          label: v.label.trim() || undefined,
-          price: parseFloat(v.price),
-          displayOrder: i + 1,
-        }));
-
-        const itemRes = await api.menu.create({
+        const res = await api.menu.create({
           name: name.trim(),
           description: description.trim() || undefined,
           isVeg,
           category: category || undefined,
           displayOrder: 0,
-          variants: [
-            { price: parseFloat(basePrice), displayOrder: 0 },
-            ...extraVariants,
-          ],
+          price: parseFloat(basePrice),
+          variants: allVariants.length > 0 ? allVariants : undefined,
         });
-        const item = itemRes.data;
-
+        const item = res.data;
         if (!isAvailable) {
           const updated = await api.menu.update(item.id, { isAvailable: false });
           upsertMenuItem(updated.data);
@@ -124,17 +110,8 @@ export default function AddMenuItemScreen({ navigation }: any) {
 
   const removeNewVariant = (i: number) => setNewVariations(vs => vs.filter((_, j) => j !== i));
 
-  const deleteExistingVariant = (v: MenuVariant) => {
-    Alert.alert('Remove variant', `Remove "${v.label || `₹${v.price}`}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove', style: 'destructive', onPress: async () => {
-          await api.variants.delete(editingItem!.id, v.id);
-          removeVariant(editingItem!.id, v.id);
-          setExistingVariants(vs => vs.filter(ev => ev.id !== v.id));
-        },
-      },
-    ]);
+  const removeExistingVariant = (v: MenuVariant) => {
+    setExistingVariants(vs => vs.filter(ev => ev.id !== v.id));
   };
 
   return (
@@ -232,42 +209,39 @@ export default function AddMenuItemScreen({ navigation }: any) {
           />
         </View>
 
-        {/* ── Base price (create only) ── */}
-        {!isEdit && (
-          <View style={styles.field}>
-            <Text style={styles.label}>BASE PRICE (₹) <Text style={styles.req}>*</Text></Text>
-            <TextInput
-              style={styles.input}
-              value={basePrice}
-              onChangeText={setBasePrice}
-              placeholder="₹0"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="decimal-pad"
-            />
-          </View>
-        )}
+        {/* ── Price ── */}
+        <View style={styles.field}>
+          <Text style={styles.label}>PRICE (₹) <Text style={styles.req}>*</Text></Text>
+          <TextInput
+            style={styles.input}
+            value={basePrice}
+            onChangeText={setBasePrice}
+            placeholder="₹0"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="decimal-pad"
+          />
+        </View>
 
         {/* ── Variations ── */}
         <View style={styles.field}>
-          <Text style={styles.label}>VARIATIONS · <Text style={styles.optional}>OPTIONAL</Text></Text>
+          <Text style={styles.label}>SIZE / VARIANTS <Text style={styles.optional}>· OPTIONAL</Text></Text>
+          <Text style={styles.variantsHelpText}>Add size options like Full ₹150, Half ₹80</Text>
           <View style={styles.variationsBox}>
             {existingVariants.length === 0 && newVariations.length === 0 && !showVariantForm && (
-              <Text style={styles.variationsHint}>Sizes, spice levels, add-ons</Text>
+              <Text style={styles.variationsHint}>No variants — single price item</Text>
             )}
 
-            {/* Existing persisted variants */}
             {existingVariants.map(v => (
               <View key={v.id} style={styles.variantChip}>
                 <Text style={styles.variantChipText}>
                   {v.label ? `${v.label} · ` : ''}₹{v.price}
                 </Text>
-                <TouchableOpacity onPress={() => deleteExistingVariant(v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => removeExistingVariant(v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <X size={13} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             ))}
 
-            {/* New draft variants */}
             {newVariations.map((v, i) => (
               <View key={`new-${i}`} style={[styles.variantChip, styles.variantChipNew]}>
                 <Text style={styles.variantChipText}>
@@ -285,7 +259,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
                   style={styles.variantInput}
                   value={variantLabel}
                   onChangeText={setVariantLabel}
-                  placeholder="Label (e.g. Full, Half)"
+                  placeholder="Size label (e.g. Full, Half)"
                   placeholderTextColor={colors.textSecondary}
                   autoFocus
                 />
@@ -309,7 +283,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
             ) : (
               <TouchableOpacity style={styles.addVariationBtn} onPress={() => setShowVariantForm(true)} activeOpacity={0.7}>
                 <Plus size={14} color={colors.primary} />
-                <Text style={styles.addVariationText}>Add variation</Text>
+                <Text style={styles.addVariationText}>Add size / variant</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -433,6 +407,8 @@ const styles = StyleSheet.create({
   },
   catOptionText: { fontSize: 14, color: colors.textPrimary },
   catOptionActive: { color: colors.primary, fontWeight: '700' },
+
+  variantsHelpText: { fontSize: 12, color: colors.textSecondary, marginTop: -2 },
 
   variationsBox: {
     borderWidth: 1.5,

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Order, MenuItem, MenuVariant, VendorProfile, ServiceRequest } from '../types';
+import { Order, MenuItem, VendorProfile, ServiceRequest } from '../types';
 
 interface VendorState {
   profile: VendorProfile | null;
@@ -30,9 +30,6 @@ interface VendorState {
 
   upsertMenuItem: (item: MenuItem) => void;
   removeMenuItem: (id: string) => void;
-
-  upsertVariant: (itemId: string, variant: MenuVariant) => void;
-  removeVariant: (itemId: string, variantId: string) => void;
 
   reset: () => void;
 }
@@ -93,29 +90,6 @@ export const useVendorStore = create<VendorState>(set => ({
 
   removeMenuItem: id =>
     set(state => ({ items: state.items.filter(m => m.id !== id) })),
-
-  upsertVariant: (itemId, variant) =>
-    set(state => ({
-      items: state.items.map(m => {
-        if (m.id !== itemId) return m;
-        const exists = m.variants.some(v => v.id === variant.id);
-        return {
-          ...m,
-          variants: exists
-            ? m.variants.map(v => v.id === variant.id ? variant : v)
-            : [...m.variants, variant],
-        };
-      }),
-    })),
-
-  removeVariant: (itemId, variantId) =>
-    set(state => ({
-      items: state.items.map(m =>
-        m.id === itemId
-          ? { ...m, variants: m.variants.filter(v => v.id !== variantId) }
-          : m
-      ),
-    })),
 
   addAlertId: (id) =>
     set(state => ({ pendingAlertIds: new Set([...state.pendingAlertIds, id]) })),

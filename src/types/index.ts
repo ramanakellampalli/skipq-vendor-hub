@@ -47,6 +47,7 @@ export interface MenuItem {
   isVeg: boolean;
   isAvailable: boolean;
   displayOrder: number;
+  price: number;
   variants: MenuVariant[];
 }
 
