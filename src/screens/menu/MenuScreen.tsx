@@ -7,94 +7,13 @@ import {
   StyleSheet,
   Switch,
   Alert,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Leaf } from 'lucide-react-native';
 import { api } from '../../api';
 import { colors, radius, spacing } from '../../theme';
-import { MenuItem, MenuVariant } from '../../types';
+import { MenuItem } from '../../types';
 import { useVendorStore } from '../../store/vendorStore';
-
-// ─── Variant modal ────────────────────────────────────────────────────────────
-
-interface VariantModalProps {
-  visible: boolean;
-  itemId: string;
-  editing: MenuVariant | null;
-  onClose: () => void;
-  onSaved: (v: MenuVariant) => void;
-}
-
-function VariantModal({ visible, itemId, editing, onClose, onSaved }: VariantModalProps) {
-  const [label, setLabel] = useState(editing?.label ?? '');
-  const [price, setPrice] = useState(editing ? editing.price.toString() : '');
-
-  React.useEffect(() => {
-    setLabel(editing?.label ?? '');
-    setPrice(editing ? editing.price.toString() : '');
-  }, [editing, visible]);
-
-  const addVariant = useMutation({
-    mutationFn: () =>
-      api.variants.add(itemId, { label: label || undefined, price: parseFloat(price) }),
-    onSuccess: res => { onSaved(res.data); onClose(); },
-  });
-
-  const updateVariant = useMutation({
-    mutationFn: () =>
-      api.variants.update(itemId, editing!.id, { label: label || undefined, price: parseFloat(price) }),
-    onSuccess: res => { onSaved(res.data); onClose(); },
-  });
-
-  const handleSave = () => {
-    if (!price || isNaN(parseFloat(price))) { Alert.alert('Error', 'Enter a valid price'); return; }
-    editing ? updateVariant.mutate() : addVariant.mutate();
-  };
-
-  const busy = addVariant.isPending || updateVariant.isPending;
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{editing ? 'Edit Variant' : 'Add Variant'}</Text>
-
-          <Text style={styles.label}>Label (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={label}
-            onChangeText={setLabel}
-            placeholder="e.g. Regular, Medium, Full"
-            placeholderTextColor={colors.textSecondary}
-          />
-
-          <Text style={styles.label}>Price (₹)</Text>
-          <TextInput
-            style={styles.input}
-            value={price}
-            onChangeText={setPrice}
-            placeholder="0.00"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="decimal-pad"
-          />
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.saveBtn, busy && styles.saveBtnBusy]} onPress={handleSave} disabled={busy}>
-              <Text style={styles.saveText}>{editing ? 'Save' : 'Add'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
 
 // ─── MenuItem card ────────────────────────────────────────────────────────────
 
@@ -102,23 +21,10 @@ interface ItemCardProps {
   item: MenuItem;
   onEdit: () => void;
   onDelete: () => void;
-  onAddVariant: () => void;
-  onEditVariant: (v: MenuVariant) => void;
-  onDeleteVariant: (v: MenuVariant) => void;
   onToggleAvailable: (val: boolean) => void;
-  onToggleVariantAvailable: (v: MenuVariant, val: boolean) => void;
 }
 
-function ItemCard({
-  item,
-  onEdit,
-  onDelete,
-  onAddVariant,
-  onEditVariant,
-  onDeleteVariant,
-  onToggleAvailable,
-  onToggleVariantAvailable,
-}: ItemCardProps) {
+function ItemCard({ item, onEdit, onDelete, onToggleAvailable }: ItemCardProps) {
   const priceRange = () => {
     if (!item.variants.length) return '—';
     const prices = item.variants.map(v => v.price);
@@ -157,27 +63,17 @@ function ItemCard({
         </View>
       </View>
 
-      <View style={styles.variantRow}>
-        {item.variants.map(v => (
-          <View key={v.id} style={[styles.variantPill, !v.isAvailable && styles.variantPillOff]}>
-            <TouchableOpacity onPress={() => onToggleVariantAvailable(v, !v.isAvailable)}>
+      {item.variants.length > 0 && (
+        <View style={styles.variantRow}>
+          {item.variants.map(v => (
+            <View key={v.id} style={[styles.variantPill, !v.isAvailable && styles.variantPillOff]}>
               <Text style={[styles.variantLabel, !v.isAvailable && styles.variantLabelOff]}>
                 {v.label ? `${v.label} · ` : ''}₹{v.price.toFixed(2)}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onEditVariant(v)} style={styles.variantEditBtn}>
-              <Pencil size={12} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDeleteVariant(v)} style={styles.variantDeleteBtn}>
-              <Trash2 size={12} color={colors.error} />
-            </TouchableOpacity>
-          </View>
-        ))}
-        <TouchableOpacity style={styles.addVariantBtn} onPress={onAddVariant}>
-          <Plus size={12} color={colors.primary} />
-          <Text style={styles.addVariantText}>variant</Text>
-        </TouchableOpacity>
-      </View>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -189,24 +85,10 @@ interface CategorySectionProps {
   items: MenuItem[];
   onEditItem: (item: MenuItem) => void;
   onDeleteItem: (item: MenuItem) => void;
-  onAddVariant: (item: MenuItem) => void;
-  onEditVariant: (item: MenuItem, v: MenuVariant) => void;
-  onDeleteVariant: (item: MenuItem, v: MenuVariant) => void;
   onToggleItemAvailable: (item: MenuItem, val: boolean) => void;
-  onToggleVariantAvailable: (item: MenuItem, v: MenuVariant, val: boolean) => void;
 }
 
-function CategorySection({
-  title,
-  items,
-  onEditItem,
-  onDeleteItem,
-  onAddVariant,
-  onEditVariant,
-  onDeleteVariant,
-  onToggleItemAvailable,
-  onToggleVariantAvailable,
-}: CategorySectionProps) {
+function CategorySection({ title, items, onEditItem, onDeleteItem, onToggleItemAvailable }: CategorySectionProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -227,11 +109,7 @@ function CategorySection({
           item={item}
           onEdit={() => onEditItem(item)}
           onDelete={() => onDeleteItem(item)}
-          onAddVariant={() => onAddVariant(item)}
-          onEditVariant={v => onEditVariant(item, v)}
-          onDeleteVariant={v => onDeleteVariant(item, v)}
           onToggleAvailable={val => onToggleItemAvailable(item, val)}
-          onToggleVariantAvailable={(v, val) => onToggleVariantAvailable(item, v, val)}
         />
       ))}
     </View>
@@ -245,12 +123,7 @@ export default function MenuScreen({ navigation }: any) {
   const setEditingItem = useVendorStore(s => s.setEditingItem);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
   const removeMenuItem = useVendorStore(s => s.removeMenuItem);
-  const upsertVariant  = useVendorStore(s => s.upsertVariant);
-  const removeVariant  = useVendorStore(s => s.removeVariant);
 
-  const [variantModal, setVariantModal] = useState<{ visible: boolean; itemId: string; editing: MenuVariant | null }>({ visible: false, itemId: '', editing: null });
-
-  // Group items by category string; items without a category go into "Other"
   const grouped = React.useMemo(() => {
     const map = new Map<string, MenuItem[]>();
     for (const item of items) {
@@ -267,34 +140,15 @@ export default function MenuScreen({ navigation }: any) {
     onSuccess: res => upsertMenuItem(res.data),
   });
 
-  const updateVariantAvailability = useMutation({
-    mutationFn: ({ itemId, variantId, val }: { itemId: string; variantId: string; val: boolean }) =>
-      api.variants.update(itemId, variantId, { isAvailable: val }),
-    onSuccess: (res, vars) => upsertVariant(vars.itemId, res.data),
-  });
-
   const deleteItemMutation = useMutation({
     mutationFn: (id: string) => api.menu.delete(id),
     onSuccess: (_, id) => removeMenuItem(id),
-  });
-
-  const deleteVariantMutation = useMutation({
-    mutationFn: ({ itemId, variantId }: { itemId: string; variantId: string }) =>
-      api.variants.delete(itemId, variantId),
-    onSuccess: (_, vars) => removeVariant(vars.itemId, vars.variantId),
   });
 
   const confirmDeleteItem = (item: MenuItem) => {
     Alert.alert('Delete Item', `Remove "${item.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteItemMutation.mutate(item.id) },
-    ]);
-  };
-
-  const confirmDeleteVariant = (item: MenuItem, v: MenuVariant) => {
-    Alert.alert('Delete Variant', `Remove "${v.label || 'variant'}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteVariantMutation.mutate({ itemId: item.id, variantId: v.id }) },
     ]);
   };
 
@@ -322,11 +176,7 @@ export default function MenuScreen({ navigation }: any) {
             items={groupItems}
             onEditItem={item => { setEditingItem(item); navigation.navigate('AddMenuItem'); }}
             onDeleteItem={confirmDeleteItem}
-            onAddVariant={item => setVariantModal({ visible: true, itemId: item.id, editing: null })}
-            onEditVariant={(item, v) => setVariantModal({ visible: true, itemId: item.id, editing: v })}
-            onDeleteVariant={confirmDeleteVariant}
             onToggleItemAvailable={(item, val) => updateItemAvailability.mutate({ id: item.id, val })}
-            onToggleVariantAvailable={(item, v, val) => updateVariantAvailability.mutate({ itemId: item.id, variantId: v.id, val })}
           />
         ))}
 
@@ -338,14 +188,6 @@ export default function MenuScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
-
-      <VariantModal
-        visible={variantModal.visible}
-        itemId={variantModal.itemId}
-        editing={variantModal.editing}
-        onClose={() => setVariantModal({ visible: false, itemId: '', editing: null })}
-        onSaved={v => upsertVariant(variantModal.itemId, v)}
-      />
     </View>
   );
 }
@@ -427,9 +269,6 @@ const styles = StyleSheet.create({
 
   variantRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   variantPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
@@ -440,64 +279,8 @@ const styles = StyleSheet.create({
   variantPillOff: { opacity: 0.45 },
   variantLabel: { fontSize: 12, color: colors.textPrimary },
   variantLabelOff: { textDecorationLine: 'line-through', color: colors.textSecondary },
-  variantEditBtn: { paddingLeft: 4 },
-  variantDeleteBtn: { paddingLeft: 2 },
-  addVariantBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderStyle: 'dashed',
-  },
-  addVariantText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
 
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: spacing.sm },
   emptyText: { fontSize: 16, fontWeight: '600', color: colors.textSecondary },
   emptyHint: { fontSize: 14, color: colors.textSecondary },
-
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
-  modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: colors.navy, marginBottom: 4 },
-  label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-  },
-  textArea: { minHeight: 72, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  modalActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  cancelBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  cancelText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-  saveBtn: {
-    flex: 2,
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  saveBtnBusy: { opacity: 0.6 },
 });

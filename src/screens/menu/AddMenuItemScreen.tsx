@@ -28,8 +28,6 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const editingItem    = useVendorStore(s => s.editingItem);
   const setEditingItem = useVendorStore(s => s.setEditingItem);
   const upsertMenuItem = useVendorStore(s => s.upsertMenuItem);
-  const removeVariant  = useVendorStore(s => s.removeVariant);
-  const upsertVariant  = useVendorStore(s => s.upsertVariant);
 
   const isEdit = editingItem !== null;
 
@@ -63,26 +61,24 @@ export default function AddMenuItemScreen({ navigation }: any) {
   const save = useMutation({
     mutationFn: async () => {
       if (isEdit) {
-        // Update item fields
+        const allVariants = [
+          ...existingVariants.map((v, i) => ({ label: v.label, price: v.price, displayOrder: i })),
+          ...newVariations.map((v, i) => ({
+            label: v.label.trim() || undefined,
+            price: parseFloat(v.price),
+            displayOrder: existingVariants.length + i,
+          })),
+        ];
         const itemRes = await api.menu.update(editingItem.id, {
           name: name.trim(),
           description: description.trim() || undefined,
           isVeg,
           category: category || undefined,
           isAvailable,
+          variants: allVariants,
         });
         upsertMenuItem(itemRes.data);
-
-        // Add any new draft variants
-        for (const v of newVariations) {
-          const vRes = await api.variants.add(editingItem.id, {
-            label: v.label.trim() || undefined,
-            price: parseFloat(v.price),
-          });
-          upsertVariant(editingItem.id, vRes.data);
-        }
       } else {
-        // Create new item with all variants in one call
         const extraVariants = newVariations.map((v, i) => ({
           label: v.label.trim() || undefined,
           price: parseFloat(v.price),
@@ -124,17 +120,8 @@ export default function AddMenuItemScreen({ navigation }: any) {
 
   const removeNewVariant = (i: number) => setNewVariations(vs => vs.filter((_, j) => j !== i));
 
-  const deleteExistingVariant = (v: MenuVariant) => {
-    Alert.alert('Remove variant', `Remove "${v.label || `₹${v.price}`}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove', style: 'destructive', onPress: async () => {
-          await api.variants.delete(editingItem!.id, v.id);
-          removeVariant(editingItem!.id, v.id);
-          setExistingVariants(vs => vs.filter(ev => ev.id !== v.id));
-        },
-      },
-    ]);
+  const removeExistingVariant = (v: MenuVariant) => {
+    setExistingVariants(vs => vs.filter(ev => ev.id !== v.id));
   };
 
   return (
@@ -261,7 +248,7 @@ export default function AddMenuItemScreen({ navigation }: any) {
                 <Text style={styles.variantChipText}>
                   {v.label ? `${v.label} · ` : ''}₹{v.price}
                 </Text>
-                <TouchableOpacity onPress={() => deleteExistingVariant(v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => removeExistingVariant(v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <X size={13} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>

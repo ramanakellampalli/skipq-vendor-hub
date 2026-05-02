@@ -1,5 +1,5 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, MenuVariant, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
+import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
 
 export interface SyncResponse {
   profile: VendorProfile;
@@ -75,18 +75,10 @@ export const api = {
       isAvailable?: boolean;
       category?: string;
       displayOrder?: number;
+      variants?: { label?: string; price: number; displayOrder?: number }[];
     }) =>
       client.patch<MenuItem>(`/api/v1/vendor/menu/${id}`, data),
     delete: (id: string) =>
       client.delete(`/api/v1/vendor/menu/${id}`),
-  },
-
-  variants: {
-    add: (itemId: string, data: { label?: string; price: number; isAvailable?: boolean; displayOrder?: number }) =>
-      client.post<MenuVariant>(`/api/v1/vendor/menu/${itemId}/variants`, data),
-    update: (itemId: string, variantId: string, data: { label?: string; price?: number; isAvailable?: boolean; displayOrder?: number }) =>
-      client.patch<MenuVariant>(`/api/v1/vendor/menu/${itemId}/variants/${variantId}`, data),
-    delete: (itemId: string, variantId: string) =>
-      client.delete(`/api/v1/vendor/menu/${itemId}/variants/${variantId}`),
   },
 };
