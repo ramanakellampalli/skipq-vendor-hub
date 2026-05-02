@@ -65,7 +65,8 @@ export const api = {
       isVeg: boolean;
       category?: string;
       displayOrder?: number;
-      variants: { label?: string; price: number; displayOrder?: number }[];
+      price: number;
+      variants?: { label?: string; price: number; displayOrder?: number }[];
     }) =>
       client.post<MenuItem>('/api/v1/vendor/menu', data),
     update: (id: string, data: {
@@ -75,6 +76,7 @@ export const api = {
       isAvailable?: boolean;
       category?: string;
       displayOrder?: number;
+      price?: number;
       variants?: { label?: string; price: number; displayOrder?: number }[];
     }) =>
       client.patch<MenuItem>(`/api/v1/vendor/menu/${id}`, data),

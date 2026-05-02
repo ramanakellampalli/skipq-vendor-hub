@@ -25,8 +25,8 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, onEdit, onDelete, onToggleAvailable }: ItemCardProps) {
-  const priceRange = () => {
-    if (!item.variants.length) return '—';
+  const priceDisplay = () => {
+    if (!item.variants.length) return `₹${item.price.toFixed(2)}`;
     const prices = item.variants.map(v => v.price);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -44,7 +44,7 @@ function ItemCard({ item, onEdit, onDelete, onToggleAvailable }: ItemCardProps) 
             {item.description ? (
               <Text style={styles.itemDesc} numberOfLines={1}>{item.description}</Text>
             ) : null}
-            <Text style={styles.itemPrice}>{priceRange()}</Text>
+            <Text style={styles.itemPrice}>{priceDisplay()}</Text>
           </View>
         </View>
         <View style={styles.itemActions}>
