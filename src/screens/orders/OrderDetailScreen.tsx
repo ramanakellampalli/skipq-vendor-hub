@@ -18,12 +18,14 @@ import DownloadInvoiceButton from '../../components/DownloadInvoiceButton';
 import { useVendorStore } from '../../store/vendorStore';
 
 const STATUS_ACTIONS: Record<OrderStatus, { next?: OrderStatus; reject?: boolean; canComplete?: boolean }> = {
-  PENDING:   { next: 'ACCEPTED', reject: true },
-  ACCEPTED:  { next: 'PREPARING', canComplete: true },
-  PREPARING: { next: 'READY', canComplete: true },
-  READY:     { next: 'COMPLETED' },
-  COMPLETED: {},
-  REJECTED:  {},
+  AWAITING_PAYMENT: {},
+  PENDING:          { next: 'ACCEPTED', reject: true },
+  ACCEPTED:         { next: 'PREPARING', canComplete: true },
+  PREPARING:        { next: 'READY', canComplete: true },
+  READY:            { next: 'COMPLETED' },
+  COMPLETED:        {},
+  REJECTED:         {},
+  CANCELLED:        {},
 };
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {

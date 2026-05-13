@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Switch, StyleSheet, StatusBar, RefreshControl } from 'react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useVendorStore } from '../../store/vendorStore';
 import { api } from '../../api';
@@ -62,6 +63,19 @@ export default function HomeScreen({ navigation }: any) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
         }>
+
+        {/* KYC pending banner */}
+        {profile && !profile.kycApproved && (
+          <View style={styles.kycBanner}>
+            <AlertTriangle size={18} color="#92400E" />
+            <View style={styles.kycBannerText}>
+              <Text style={styles.kycBannerTitle}>Payouts on hold</Text>
+              <Text style={styles.kycBannerBody}>
+                Your Razorpay account verification is pending. Orders will be accepted normally but payouts will be held until verification completes.
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Open/close toggle */}
         <View style={[styles.toggleCard, profile?.isOpen ? styles.toggleCardOpen : styles.toggleCardClosed]}>
@@ -127,4 +141,17 @@ const styles = StyleSheet.create({
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   toggleStatus: { fontSize: 15, fontWeight: '700', color: colors.navy },
   toggleSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  kycBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    borderRadius: 12,
+    padding: spacing.md,
+  },
+  kycBannerText: { flex: 1, gap: 2 },
+  kycBannerTitle: { fontSize: 14, fontWeight: '700', color: '#92400E' },
+  kycBannerBody:  { fontSize: 13, color: '#92400E', lineHeight: 18 },
 });

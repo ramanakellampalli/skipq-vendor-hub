@@ -1,12 +1,14 @@
 export type OrderStatus =
+  | 'AWAITING_PAYMENT'
   | 'PENDING'
   | 'ACCEPTED'
   | 'PREPARING'
   | 'READY'
   | 'COMPLETED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'CANCELLED';
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export interface OrderItem {
   menuItemId: string;
