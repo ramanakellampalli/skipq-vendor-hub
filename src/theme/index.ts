@@ -14,12 +14,14 @@ export const colors = {
 };
 
 export const status = {
-  PENDING: { color: colors.pending, label: 'Pending' },
-  ACCEPTED: { color: colors.info, label: 'Accepted' },
-  PREPARING: { color: colors.primary, label: 'Preparing' },
-  READY: { color: colors.success, label: 'Ready' },
-  COMPLETED: { color: colors.textSecondary, label: 'Completed' },
-  REJECTED: { color: colors.error, label: 'Rejected' },
+  AWAITING_PAYMENT: { color: colors.textSecondary, label: 'Awaiting Payment' },
+  PENDING:          { color: colors.pending,        label: 'Pending' },
+  ACCEPTED:         { color: colors.info,           label: 'Accepted' },
+  PREPARING:        { color: colors.primary,        label: 'Preparing' },
+  READY:            { color: colors.success,        label: 'Ready' },
+  COMPLETED:        { color: colors.textSecondary,  label: 'Completed' },
+  REJECTED:         { color: colors.error,          label: 'Rejected' },
+  CANCELLED:        { color: colors.error,          label: 'Cancelled' },
 };
 
 export const radius = {
