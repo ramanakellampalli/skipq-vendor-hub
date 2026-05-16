@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import PasswordInput from '../../components/PasswordInput';
 import LoadingDots from '../../components/LoadingDots';
@@ -28,6 +29,7 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
+  const [suspensionNote, setSuspensionNote] = useState<string | null>(null);
   const { setAuth } = useAuthStore();
 
   useEffect(() => {
@@ -57,6 +59,10 @@ export default function LoginScreen({ navigation }: any) {
       await setAuth(data.token, data.userId, data.name, data.email);
       return true;
     } catch (err: any) {
+      if (err.response?.status === 403) {
+        setSuspensionNote(err.response?.data?.message || 'Your account has been suspended. Contact admin to resolve.');
+        return false;
+      }
       const msg = err.response?.data?.message || err.message || 'Network error';
       Alert.alert('Login Failed', msg);
       return false;
@@ -167,6 +173,18 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       </View>
+      <Modal visible={!!suspensionNote} transparent animationType="fade" onRequestClose={() => {}}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconBox}>
+              <Text style={styles.modalIcon}>⚠️</Text>
+            </View>
+            <Text style={styles.modalTitle}>Account Suspended</Text>
+            <Text style={styles.modalBody}>{suspensionNote}</Text>
+            <Text style={styles.modalContact}>Contact admin to resolve this.</Text>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -228,4 +246,24 @@ const styles = StyleSheet.create({
   setupLink: { alignItems: 'center', paddingVertical: spacing.sm },
   setupLinkText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
   forgotText: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+    width: '100%',
+  },
+  modalIconBox: { marginBottom: spacing.xs },
+  modalIcon: { fontSize: 36 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+  modalBody: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  modalContact: { fontSize: 13, color: colors.primary, fontWeight: '600', textAlign: 'center', marginTop: spacing.xs },
 });
