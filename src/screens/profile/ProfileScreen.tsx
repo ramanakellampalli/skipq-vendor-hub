@@ -9,11 +9,13 @@ import {
   Alert,
   ScrollView,
   Linking,
+  Image,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AuthorizationStatus } from '@react-native-firebase/messaging';
 import { useMutation } from '@tanstack/react-query';
-import { LogOut, Trash2, Bell, BellOff, ChevronRight } from 'lucide-react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { LogOut, Trash2, Bell, BellOff, ChevronRight, Camera } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
@@ -38,6 +40,7 @@ export default function ProfileScreen() {
   const [prepTime, setPrepTime] = useState('');
   const [editingPrepTime, setEditingPrepTime] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [logoUri, setLogoUri] = useState<string | undefined>(profile?.logoUrl);
   const [notifStatus, setNotifStatus] = useState<number>(AuthorizationStatus.NOT_DETERMINED);
 
   useEffect(() => {
@@ -54,6 +57,26 @@ export default function ProfileScreen() {
     mutationFn: (data: any) => api.vendor.updateProfile(data),
     onSuccess: res => setProfile(res.data),
   });
+
+  const uploadLogo = useMutation({
+    mutationFn: (formData: FormData) => api.vendor.uploadLogo(formData),
+    onSuccess: res => setLogoUri(res.data.url),
+    onError: () => Alert.alert('Error', 'Failed to upload logo. Please try again.'),
+  });
+
+  const handleLogoUpload = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, response => {
+      if (response.didCancel || !response.assets?.length) return;
+      const asset = response.assets[0];
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        type: asset.type ?? 'image/jpeg',
+        name: asset.fileName ?? 'logo.jpg',
+      } as any);
+      uploadLogo.mutate(formData);
+    });
+  };
 
   const handlePrepTimeSave = () => {
     const val = parseInt(prepTime, 10);
@@ -128,6 +151,18 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Store</Text>
+        <TouchableOpacity style={styles.row} onPress={handleLogoUpload} activeOpacity={0.7}>
+          <Text style={styles.rowLabel}>Brand Logo</Text>
+          <View style={styles.logoRight}>
+            {logoUri ? (
+              <Image source={{ uri: logoUri }} style={styles.logoThumb} />
+            ) : (
+              <Text style={styles.rowValue}>Not set</Text>
+            )}
+            <Camera size={16} color={colors.primary} />
+          </View>
+        </TouchableOpacity>
+        <View style={styles.divider} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Name</Text>
           <Text style={styles.rowValue}>{profile?.name}</Text>
@@ -385,4 +420,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     flex: 1,
   },
+  logoRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoThumb: { width: 36, height: 36, borderRadius: 6, borderWidth: 1, borderColor: colors.border },
 });

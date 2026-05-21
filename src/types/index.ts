@@ -89,4 +89,5 @@ export interface VendorProfile {
   gstin?: string;
   kycApproved: boolean;
   campusName?: string;
+  logoUrl?: string;
 }
