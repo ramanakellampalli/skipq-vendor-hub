@@ -38,6 +38,10 @@ export const api = {
       client.get<VendorProfile>('/api/v1/vendor/profile'),
     updateProfile: (data: Partial<VendorProfile>) =>
       client.patch<VendorProfile>('/api/v1/vendor/profile', data),
+    uploadLogo: (formData: FormData) =>
+      client.put<{ url: string }>('/api/v1/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
     deleteAccount: () =>
       client.delete('/api/v1/vendor/account'),
     registerDeviceToken: (token: string) =>
