@@ -23,6 +23,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   vendor: { id: string; name: string };
+  customer?: { name: string; phone: string | null };
   state: { orderStatus: OrderStatus; paymentStatus: PaymentStatus };
   pricing: {
     subtotal: number;
@@ -88,6 +89,8 @@ export interface VendorProfile {
   gstRegistered: boolean;
   gstin?: string;
   kycApproved: boolean;
-  campusName?: string;
+  campusName?: string | null;
+  city?: string | null;
+  phone?: string | null;
   logoUrl?: string;
 }
