@@ -167,12 +167,29 @@ export default function ProfileScreen() {
           <Text style={styles.rowLabel}>Name</Text>
           <Text style={styles.rowValue}>{profile?.name}</Text>
         </View>
-        {profile?.campusName && (
+        {profile?.campusName ? (
           <>
             <View style={styles.divider} />
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Campus</Text>
               <Text style={styles.rowValue}>{profile.campusName}</Text>
+            </View>
+          </>
+        ) : profile?.city ? (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>City</Text>
+              <Text style={styles.rowValue}>{profile.city}</Text>
+            </View>
+          </>
+        ) : null}
+        {profile?.phone && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Phone</Text>
+              <Text style={styles.rowValue}>{profile.phone}</Text>
             </View>
           </>
         )}

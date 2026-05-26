@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react-native';
@@ -100,6 +101,18 @@ export default function OrderDetailScreen({ route, navigation }: any) {
         {/* Order Info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Details</Text>
+          {order.customer && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Customer</Text>
+              {order.customer.phone ? (
+                <TouchableOpacity onPress={() => Linking.openURL(`tel:${order.customer!.phone}`)}>
+                  <Text style={[styles.infoValue, styles.callLink]}>{order.customer.name}</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.infoValue}>{order.customer.name}</Text>
+              )}
+            </View>
+          )}
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Placed at</Text>
             <Text style={styles.infoValue}>
@@ -210,6 +223,7 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
   infoLabel: { fontSize: 14, color: colors.textSecondary },
   infoValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  callLink: { color: colors.primary, textDecorationLine: 'underline' },
   actions: {
     flexDirection: 'row',
     padding: spacing.md,
