@@ -59,7 +59,7 @@ export default function ProfileScreen() {
   });
 
   const uploadLogo = useMutation({
-    mutationFn: (formData: FormData) => api.vendor.uploadLogo(formData),
+    mutationFn: (formData: FormData) => api.vendor.uploadLogo(profile!.id, formData),
     onSuccess: res => setLogoUri(res.data.url),
     onError: () => Alert.alert('Error', 'Failed to upload logo. Please try again.'),
   });
