@@ -27,7 +27,7 @@ interface ItemCardProps {
 function ItemCard({ item, onEdit, onDelete, onToggleAvailable }: ItemCardProps) {
   const priceDisplay = () => {
     if (!item.variants.length) return `₹${item.price.toFixed(2)}`;
-    const prices = item.variants.map(v => v.price);
+    const prices = [...item.variants.map(v => v.price), item.price];
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     return min === max ? `₹${min.toFixed(2)}` : `₹${min.toFixed(2)} – ₹${max.toFixed(2)}`;
