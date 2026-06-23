@@ -10,7 +10,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../api';
 import { useVendorStore } from '../../store/vendorStore';
@@ -28,9 +28,10 @@ const TYPES: { value: ServiceRequestType; label: string }[] = [
 
 export default function NewSupportRequestScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const addServiceRequest = useVendorStore(state => state.addServiceRequest);
 
-  const [type, setType] = useState<ServiceRequestType>('PAYMENT_ISSUE');
+  const [type, setType] = useState<ServiceRequestType>(route.params?.initialType ?? 'PAYMENT_ISSUE');
   const [showDropdown, setShowDropdown] = useState(false);
   const [description, setDescription] = useState('');
 

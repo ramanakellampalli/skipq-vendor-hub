@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Order, MenuItem, VendorProfile, ServiceRequest } from '../types';
+import { VendorPayout } from '../api';
 
 interface VendorState {
   profile: VendorProfile | null;
@@ -7,6 +8,8 @@ interface VendorState {
   pastOrders: Order[];
   items: MenuItem[];
   serviceRequests: ServiceRequest[];
+  availableBalance: number;
+  recentPayouts: VendorPayout[];
   isSynced: boolean;
   pendingAlertIds: Set<string>;
   editingItem: MenuItem | null;
@@ -17,6 +20,8 @@ interface VendorState {
     pastOrders: Order[];
     items: MenuItem[];
     serviceRequests: ServiceRequest[];
+    availableBalance?: number;
+    recentPayouts?: VendorPayout[];
   }) => void;
 
   addServiceRequest: (sr: ServiceRequest) => void;
@@ -40,15 +45,27 @@ export const useVendorStore = create<VendorState>(set => ({
   pastOrders: [],
   items: [],
   serviceRequests: [],
+  availableBalance: 0,
+  recentPayouts: [],
   isSynced: false,
   pendingAlertIds: new Set<string>(),
   editingItem: null,
 
-  setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests }) => {
+  setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests, availableBalance, recentPayouts }) => {
     const pendingAlertIds = new Set(
       activeOrders.filter(o => o.state.orderStatus === 'PENDING').map(o => o.id),
     );
-    set({ profile: profile ?? null, activeOrders, pastOrders, items, serviceRequests: serviceRequests ?? [], isSynced: true, pendingAlertIds });
+    set({
+      profile: profile ?? null,
+      activeOrders,
+      pastOrders,
+      items,
+      serviceRequests: serviceRequests ?? [],
+      availableBalance: availableBalance ?? 0,
+      recentPayouts: recentPayouts ?? [],
+      isSynced: true,
+      pendingAlertIds,
+    });
   },
 
   addServiceRequest: (sr) =>
@@ -102,5 +119,16 @@ export const useVendorStore = create<VendorState>(set => ({
     }),
 
   reset: () =>
-    set({ profile: null, activeOrders: [], pastOrders: [], items: [], serviceRequests: [], isSynced: false, pendingAlertIds: new Set(), editingItem: null }),
+    set({
+      profile: null,
+      activeOrders: [],
+      pastOrders: [],
+      items: [],
+      serviceRequests: [],
+      availableBalance: 0,
+      recentPayouts: [],
+      isSynced: false,
+      pendingAlertIds: new Set(),
+      editingItem: null,
+    }),
 }));
