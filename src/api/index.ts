@@ -32,16 +32,8 @@ export const api = {
       client.post('/api/v1/auth/reset-password', { email, role: 'VENDOR', otp, newPassword }),
     setupPassword: (token: string, newPassword: string) =>
       client.post('/api/v1/auth/setup-password', { token, newPassword }),
-    setupAccount: (payload: {
-      token: string;
-      newPassword: string;
-      businessName: string;
-      pan: string;
-      bankAccount: string;
-      ifsc: string;
-      gstRegistered: boolean;
-      gstin?: string;
-    }) => client.post('/api/v1/auth/setup-account', payload),
+    setupAccount: (payload: { token: string; newPassword: string }) =>
+      client.post('/api/v1/auth/setup-account', payload),
   },
 
   vendor: {

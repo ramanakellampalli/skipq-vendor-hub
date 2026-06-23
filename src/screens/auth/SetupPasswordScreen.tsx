@@ -10,16 +10,19 @@ import {
   Alert,
   Linking,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import { api } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 import PasswordInput from '../../components/PasswordInput';
-import LoadingDots from '../../components/LoadingDots';
 import { colors, radius, spacing } from '../../theme';
 
 export default function SetupPasswordScreen({ route, navigation }: any) {
   const [token, setToken] = useState(route?.params?.token || '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { setAuth } = useAuthStore();
 
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {
@@ -33,7 +36,7 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
     return () => sub.remove();
   }, []);
 
-  const handleNext = () => {
+  const handleSubmit = async () => {
     if (!token.trim()) {
       Alert.alert('Error', 'Please enter your setup token');
       return;
@@ -46,7 +49,15 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    navigation.navigate('SetupKYC', { token: token.trim(), password });
+    try {
+      setLoading(true);
+      const { data } = await api.auth.setupAccount({ token: token.trim(), newPassword: password });
+      await setAuth(data.token, data.userId, data.name, data.email);
+    } catch (err: any) {
+      Alert.alert('Setup Failed', err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,10 +73,6 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
           <Text style={styles.subtitle}>
             Enter the token from your invite email and choose a password
           </Text>
-          <View style={styles.stepRow}>
-            <View style={[styles.step, styles.stepActive]} />
-            <View style={styles.step} />
-          </View>
         </View>
 
         <View style={styles.form}>
@@ -96,9 +103,9 @@ export default function SetupPasswordScreen({ route, navigation }: any) {
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleNext}
+            onPress={handleSubmit}
             disabled={loading}>
-            {loading ? <LoadingDots /> : <Text style={styles.buttonText}>Next →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Set Up Account</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
@@ -137,14 +144,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: spacing.md,
   },
-  stepRow: { flexDirection: 'row', gap: 8, marginTop: spacing.sm },
-  step: {
-    width: 32,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-  },
-  stepActive: { backgroundColor: colors.primary },
   form: { gap: spacing.sm },
   label: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   input: {

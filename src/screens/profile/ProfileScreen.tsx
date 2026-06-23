@@ -263,7 +263,7 @@ export default function ProfileScreen() {
             <View style={styles.divider} />
             <View style={styles.row}>
               <Text style={styles.kycNote}>
-                Your payouts are on hold until Razorpay verifies your KYC. This usually takes 24–48 hours.
+                Your payouts are on hold until the SkipQ team verifies your details.
               </Text>
             </View>
           </>

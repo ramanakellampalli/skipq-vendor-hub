@@ -18,7 +18,6 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import SetupPasswordScreen from '../screens/auth/SetupPasswordScreen';
-import SetupKYCScreen from '../screens/auth/SetupKYCScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
@@ -50,7 +49,6 @@ function AuthNavigator() {
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <AuthStack.Screen name="SetupPassword" component={SetupPasswordScreen} />
-      <AuthStack.Screen name="SetupKYC" component={SetupKYCScreen} />
     </AuthStack.Navigator>
   );
 }
