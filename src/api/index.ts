@@ -1,12 +1,25 @@
 import { client } from './client';
 import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
 
+export type PayoutStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
+
+export interface VendorPayout {
+  id: string;
+  amount: number;
+  settlementCutoffAt: string;
+  status: PayoutStatus;
+  payoutReference: string | null;
+  createdAt: string;
+}
+
 export interface SyncResponse {
   profile: VendorProfile;
   activeOrders: Order[];
   pastOrders: Order[];
   items: MenuItem[];
   serviceRequests: ServiceRequest[];
+  availableBalance?: number;
+  recentPayouts?: VendorPayout[];
 }
 
 export const api = {

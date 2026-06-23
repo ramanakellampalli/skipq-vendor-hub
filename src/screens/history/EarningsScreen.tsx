@@ -3,11 +3,12 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, AlertCircle, Flag } from 'lucide-react-native';
 import { useVendorStore } from '../../store/vendorStore';
 import { colors, radius, spacing } from '../../theme';
 import { computeMonthlySummary, buildMonthlySummaryHtml } from '../../utils/invoiceHtml';
 import { generateAndSharePdf } from '../../utils/pdfExport';
+import { VendorPayout } from '../../api';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -31,9 +32,45 @@ function Divider() {
   return <View style={styles.divider} />;
 }
 
+function PayoutStatusBadge({ status }: { status: VendorPayout['status'] }) {
+  const config = {
+    SUCCESS: { bg: '#DCFCE7', text: '#16A34A', label: 'Paid' },
+    PENDING: { bg: '#FEF9C3', text: '#A16207', label: 'Processing' },
+    FAILED:  { bg: '#FEE2E2', text: '#DC2626', label: 'Failed' },
+  }[status];
+  return (
+    <View style={[styles.badge, { backgroundColor: config.bg }]}>
+      <Text style={[styles.badgeText, { color: config.text }]}>{config.label}</Text>
+    </View>
+  );
+}
+
+function PayoutRow({ payout }: { payout: VendorPayout }) {
+  const cutoff = new Date(payout.settlementCutoffAt);
+  const dateLabel = `Up to ${cutoff.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+  return (
+    <View style={styles.payoutRow}>
+      <View style={styles.payoutLeft}>
+        <Text style={styles.payoutAmount}>{fmt(payout.amount)}</Text>
+        <Text style={styles.payoutDate}>{dateLabel}</Text>
+        {payout.status === 'SUCCESS' && payout.payoutReference && (
+          <Text style={styles.payoutRef}>Ref: {payout.payoutReference}</Text>
+        )}
+        {payout.status === 'FAILED' && (
+          <Text style={styles.payoutNote}>Carried to next settlement</Text>
+        )}
+      </View>
+      <PayoutStatusBadge status={payout.status} />
+    </View>
+  );
+}
+
 export default function EarningsScreen({ navigation }: any) {
   const pastOrders = useVendorStore(state => state.pastOrders);
   const profile = useVendorStore(state => state.profile);
+  const availableBalance = useVendorStore(state => state.availableBalance);
+  const recentPayouts = useVendorStore(state => state.recentPayouts);
 
   const now = new Date();
 
@@ -51,7 +88,6 @@ export default function EarningsScreen({ navigation }: any) {
 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-
   const [downloading, setDownloading] = useState(false);
 
   const summary = useMemo(
@@ -102,6 +138,13 @@ export default function EarningsScreen({ navigation }: any) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
+        {/* Available balance */}
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>PENDING SETTLEMENT</Text>
+          <Text style={styles.balanceAmount}>{fmt(availableBalance)}</Text>
+          <Text style={styles.balanceSub}>Credited to your account in the next daily payout</Text>
+        </View>
+
         {/* Period navigator */}
         <View style={styles.periodRow}>
           <TouchableOpacity
@@ -119,7 +162,7 @@ export default function EarningsScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Hero — net payout */}
+        {/* Hero — gross earnings */}
         <View style={styles.hero}>
           <Text style={styles.heroLabel}>GROSS EARNINGS</Text>
           <Text style={styles.heroAmount}>{fmt(summary.grossRevenue)}</Text>
@@ -172,6 +215,30 @@ export default function EarningsScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
 
+        {/* Payout history */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>PAYOUT HISTORY</Text>
+          {recentPayouts.length === 0 ? (
+            <Text style={styles.emptyText}>No payouts yet</Text>
+          ) : (
+            recentPayouts.map((p, i) => (
+              <View key={p.id}>
+                <PayoutRow payout={p} />
+                {i < recentPayouts.length - 1 && <Divider />}
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Report a payout issue */}
+        <TouchableOpacity
+          style={styles.reportBtn}
+          onPress={() => navigation.navigate('NewSupportRequest', { initialType: 'PAYOUT_ISSUE' })}
+          activeOpacity={0.85}>
+          <Flag size={16} color={colors.primary} />
+          <Text style={styles.reportText}>Report a payout issue</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
@@ -195,6 +262,35 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.navy },
 
   scroll: { padding: spacing.md, gap: spacing.md, paddingBottom: 40 },
+
+  /* Available balance card */
+  balanceCard: {
+    backgroundColor: colors.navy,
+    borderRadius: radius.lg,
+    paddingVertical: 20,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    gap: 4,
+  },
+  balanceLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  balanceAmount: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#4ADE80',
+    letterSpacing: -0.5,
+  },
+  balanceSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+    marginTop: 2,
+    textAlign: 'center',
+  },
 
   /* Period navigator */
   periodRow: {
@@ -297,6 +393,30 @@ const styles = StyleSheet.create({
 
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 4 },
 
+  /* Payout row */
+  payoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  payoutLeft: { flex: 1, gap: 2 },
+  payoutAmount: { fontSize: 15, fontWeight: '700', color: colors.navy },
+  payoutDate: { fontSize: 12, color: colors.textSecondary },
+  payoutRef: { fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' },
+  payoutNote: { fontSize: 11, color: '#DC2626' },
+
+  /* Status badge */
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: spacing.sm,
+  },
+  badgeText: { fontSize: 12, fontWeight: '700' },
+
+  emptyText: { fontSize: 14, color: colors.textSecondary, paddingVertical: 8 },
+
   /* Download button */
   downloadBtn: {
     flexDirection: 'row',
@@ -310,4 +430,18 @@ const styles = StyleSheet.create({
   },
   downloadBtnDisabled: { opacity: 0.6 },
   downloadText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
+  /* Report button */
+  reportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    backgroundColor: colors.surface,
+  },
+  reportText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 });
