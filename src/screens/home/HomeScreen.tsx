@@ -71,7 +71,7 @@ export default function HomeScreen({ navigation }: any) {
             <View style={styles.kycBannerText}>
               <Text style={styles.kycBannerTitle}>Payouts on hold</Text>
               <Text style={styles.kycBannerBody}>
-                Your Razorpay account verification is pending. Orders will be accepted normally but payouts will be held until verification completes.
+                Your details are pending review by the SkipQ team. Orders will be accepted normally but payouts will be held until your account is verified.
               </Text>
             </View>
           </View>
