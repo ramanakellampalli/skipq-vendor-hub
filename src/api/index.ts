@@ -25,7 +25,7 @@ export interface SyncResponse {
 export const api = {
   auth: {
     login: (email: string, password: string) =>
-      client.post('/api/v1/auth/login', { email, password }),
+      client.post('/api/v1/auth/login', { email, password, role: 'VENDOR' }),
     forgotPassword: (email: string) =>
       client.post('/api/v1/auth/forgot-password', { email, role: 'VENDOR' }),
     resetPassword: (email: string, otp: string, newPassword: string) =>
