@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Order, MenuItem, VendorProfile, ServiceRequest } from '../types';
+import { Order, MenuItem, VendorProfile, ServiceRequest, SubscriptionPayment } from '../types';
 import { VendorPayout } from '../api';
 
 interface VendorState {
@@ -10,6 +10,7 @@ interface VendorState {
   serviceRequests: ServiceRequest[];
   availableBalance: number;
   recentPayouts: VendorPayout[];
+  subscriptionPayments: SubscriptionPayment[];
   isSynced: boolean;
   pendingAlertIds: Set<string>;
   editingItem: MenuItem | null;
@@ -22,6 +23,7 @@ interface VendorState {
     serviceRequests: ServiceRequest[];
     availableBalance?: number;
     recentPayouts?: VendorPayout[];
+    subscriptionPayments?: SubscriptionPayment[];
   }) => void;
 
   addServiceRequest: (sr: ServiceRequest) => void;
@@ -47,11 +49,12 @@ export const useVendorStore = create<VendorState>(set => ({
   serviceRequests: [],
   availableBalance: 0,
   recentPayouts: [],
+  subscriptionPayments: [],
   isSynced: false,
   pendingAlertIds: new Set<string>(),
   editingItem: null,
 
-  setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests, availableBalance, recentPayouts }) => {
+  setSync: ({ profile, activeOrders, pastOrders, items, serviceRequests, availableBalance, recentPayouts, subscriptionPayments }) => {
     const pendingAlertIds = new Set(
       activeOrders.filter(o => o.state.orderStatus === 'PENDING').map(o => o.id),
     );
@@ -63,6 +66,7 @@ export const useVendorStore = create<VendorState>(set => ({
       serviceRequests: serviceRequests ?? [],
       availableBalance: availableBalance ?? 0,
       recentPayouts: recentPayouts ?? [],
+      subscriptionPayments: subscriptionPayments ?? [],
       isSynced: true,
       pendingAlertIds,
     });
@@ -127,6 +131,7 @@ export const useVendorStore = create<VendorState>(set => ({
       serviceRequests: [],
       availableBalance: 0,
       recentPayouts: [],
+      subscriptionPayments: [],
       isSynced: false,
       pendingAlertIds: new Set(),
       editingItem: null,

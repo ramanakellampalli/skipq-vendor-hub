@@ -20,6 +20,7 @@ export interface SyncResponse {
   serviceRequests: ServiceRequest[];
   availableBalance?: number;
   recentPayouts?: VendorPayout[];
+  subscriptionPayments?: SubscriptionPayment[];
 }
 
 export const api = {
@@ -51,8 +52,6 @@ export const api = {
       client.delete('/api/v1/vendor/account'),
     registerDeviceToken: (token: string) =>
       client.put('/api/v1/shared/device-token', { token }),
-    getSubscriptionPayments: () =>
-      client.get<SubscriptionPayment[]>('/api/v1/vendor/subscription/payments'),
   },
 
   support: {

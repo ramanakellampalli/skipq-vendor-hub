@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
 import { ArrowLeft, AlertTriangle } from 'lucide-react-native';
-import { api } from '../../api';
 import { useVendorStore } from '../../store/vendorStore';
 import { SubscriptionPayment, SubscriptionStatus } from '../../types';
 import { colors, radius, spacing } from '../../theme';
@@ -54,15 +53,7 @@ function PaymentRow({ payment, last }: { payment: SubscriptionPayment; last: boo
 
 export default function SubscriptionScreen({ navigation }: any) {
   const subscription = useVendorStore(s => s.profile?.subscription);
-  const [payments, setPayments] = useState<SubscriptionPayment[] | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.vendor.getSubscriptionPayments()
-      .then(res => setPayments(res.data))
-      .catch(() => setPayments([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const payments = useVendorStore(s => s.subscriptionPayments);
 
   const isPastDue = subscription?.status === 'PAST_DUE';
   const isFree = (subscription?.monthlyPrice ?? 0) === 0;
@@ -133,9 +124,7 @@ export default function SubscriptionScreen({ navigation }: any) {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>PAYMENT HISTORY</Text>
-          {loading ? (
-            <ActivityIndicator color={colors.primary} style={styles.loader} />
-          ) : payments && payments.length > 0 ? (
+          {payments.length > 0 ? (
             payments.map((p, i) => (
               <PaymentRow key={p.id} payment={p} last={i === payments.length - 1} />
             ))
@@ -240,7 +229,6 @@ const styles = StyleSheet.create({
   paymentRef: { fontSize: 11, color: colors.textSecondary, fontFamily: 'monospace' },
   paymentAmount: { fontSize: 15, fontWeight: '700', color: colors.navy, marginLeft: spacing.md },
 
-  loader: { paddingVertical: spacing.md },
   emptyText: { fontSize: 14, color: colors.textSecondary, paddingVertical: spacing.sm },
 
   note: {
