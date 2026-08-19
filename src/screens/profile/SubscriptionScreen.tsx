@@ -20,9 +20,8 @@ function formatMonth(iso: string) {
 }
 
 const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; bg: string; text: string }> = {
-  ACTIVE:    { label: 'Active',    bg: '#DCFCE7', text: '#16A34A' },
-  PAST_DUE:  { label: 'Past Due',  bg: '#FEE2E2', text: '#DC2626' },
-  SUSPENDED: { label: 'Suspended', bg: '#FEF3C7', text: '#D97706' },
+  ACTIVE:   { label: 'Active',   bg: '#DCFCE7', text: '#16A34A' },
+  PAST_DUE: { label: 'Past Due', bg: '#FEE2E2', text: '#DC2626' },
 };
 
 function SubscriptionBadge({ status }: { status: SubscriptionStatus }) {
