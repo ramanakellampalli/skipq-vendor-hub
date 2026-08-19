@@ -1,5 +1,5 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
+import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType, SubscriptionPayment } from '../types';
 
 export type PayoutStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
@@ -20,6 +20,7 @@ export interface SyncResponse {
   serviceRequests: ServiceRequest[];
   availableBalance?: number;
   recentPayouts?: VendorPayout[];
+  subscriptionPayments?: SubscriptionPayment[];
 }
 
 export const api = {
