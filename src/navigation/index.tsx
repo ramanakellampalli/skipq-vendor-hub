@@ -26,6 +26,7 @@ import AddMenuItemScreen from '../screens/menu/AddMenuItemScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SupportScreen from '../screens/profile/SupportScreen';
 import NewSupportRequestScreen from '../screens/profile/NewSupportRequestScreen';
+import SubscriptionScreen from '../screens/profile/SubscriptionScreen';
 import HistoryScreen from '../screens/history/HistoryScreen';
 import EarningsScreen from '../screens/history/EarningsScreen';
 
@@ -87,6 +88,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="Earnings" component={EarningsScreen} />
       <ProfileStack.Screen name="Support" component={SupportScreen} />
       <ProfileStack.Screen name="NewSupportRequest" component={NewSupportRequestScreen} />
+      <ProfileStack.Screen name="Subscription" component={SubscriptionScreen} />
     </ProfileStack.Navigator>
   );
 }

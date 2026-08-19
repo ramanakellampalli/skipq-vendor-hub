@@ -1,5 +1,5 @@
 import { client } from './client';
-import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType } from '../types';
+import { Order, OrderStatus, MenuItem, VendorProfile, ServiceRequest, ServiceRequestType, SubscriptionPayment } from '../types';
 
 export type PayoutStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
@@ -51,6 +51,8 @@ export const api = {
       client.delete('/api/v1/vendor/account'),
     registerDeviceToken: (token: string) =>
       client.put('/api/v1/shared/device-token', { token }),
+    getSubscriptionPayments: () =>
+      client.get<SubscriptionPayment[]>('/api/v1/vendor/subscription/payments'),
   },
 
   support: {

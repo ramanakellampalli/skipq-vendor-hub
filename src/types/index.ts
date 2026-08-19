@@ -79,6 +79,25 @@ export interface ServiceRequest {
   createdAt: string;
 }
 
+export type SubscriptionStatus = 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED';
+
+export interface SubscriptionInfo {
+  status: SubscriptionStatus;
+  monthlyPrice: number;
+  paidThrough: string | null;
+  lastPaymentReference: string | null;
+}
+
+export interface SubscriptionPayment {
+  id: string;
+  amount: number;
+  paymentReference: string | null;
+  paidForMonth: string;
+  paidOn: string;
+  adminNote: string | null;
+  createdAt: string;
+}
+
 export interface VendorProfile {
   id: string;
   name: string;
@@ -93,4 +112,5 @@ export interface VendorProfile {
   city?: string | null;
   phone?: string | null;
   logoUrl?: string;
+  subscription?: SubscriptionInfo;
 }

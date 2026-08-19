@@ -15,7 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AuthorizationStatus } from '@react-native-firebase/messaging';
 import { useMutation } from '@tanstack/react-query';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { LogOut, Trash2, Bell, BellOff, ChevronRight, Camera } from 'lucide-react-native';
+import { LogOut, Trash2, Bell, BellOff, ChevronRight, Camera, CreditCard } from 'lucide-react-native';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import { useVendorStore } from '../../store/vendorStore';
@@ -277,6 +277,25 @@ export default function ProfileScreen() {
             </View>
           </>
         )}
+        {profile?.subscription && (
+          <>
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Subscription')} activeOpacity={0.7}>
+              <View style={styles.notifLeft}>
+                <CreditCard size={16} color={profile.subscription.status === 'PAST_DUE' ? colors.error : colors.primary} />
+                <Text style={[styles.rowLabel, profile.subscription.status === 'PAST_DUE' && { color: colors.error }]}>
+                  Subscription
+                </Text>
+              </View>
+              <View style={styles.rowRight}>
+                {profile.subscription.status === 'PAST_DUE' && (
+                  <Text style={styles.pastDueChip}>Payment Due</Text>
+                )}
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+          </>
+        )}
         <View style={styles.divider} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>GST Registered</Text>
@@ -436,6 +455,15 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
     flex: 1,
+  },
+  pastDueChip: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.error,
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
   logoRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoThumb: { width: 36, height: 36, borderRadius: 6, borderWidth: 1, borderColor: colors.border },
