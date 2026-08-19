@@ -79,7 +79,7 @@ export interface ServiceRequest {
   createdAt: string;
 }
 
-export type SubscriptionStatus = 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED';
+export type SubscriptionStatus = 'ACTIVE' | 'PAST_DUE';
 
 export interface SubscriptionInfo {
   status: SubscriptionStatus;
